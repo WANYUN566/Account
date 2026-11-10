@@ -550,13 +550,6 @@
   /* ===== 手機版：明細改成小卡（不用左右滑），分頁區貼齊頂端 ===== */
   @media (max-width: 640px) {
     .tabs { top: 0; }
-    .tabs::before {
-      content: ""; position: absolute; left: 0; right: 0; bottom: 100%; height: 80px;
-      background: #fff7ee; pointer-events: none;
-    }
-    body.theme-teddy .tabs::before { background: #fbf3ea; }
-    body.theme-leaf .tabs::before { background: #f1faf6; }
-    body.theme-vehicle .tabs::before { background: #f0f6ff; }
 
     .table-wrap { overflow-x: visible; }
     .table-wrap table { min-width: 0; }
