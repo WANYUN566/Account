@@ -546,6 +546,56 @@
   .style-choice .pill-group label { display: flex; align-items: center; justify-content: center; gap: 6px; }
   .style-choice .pi { width: 24px; height: 24px; background-position: center; background-size: contain; background-repeat: no-repeat; display: inline-block; }
   .manage-row select { padding: 8px 10px; font-size: 15px; font-family: inherit; color: #5a4a42; border: 2px solid #f3ddd0; border-radius: 12px; background: #fffdfb; }
+
+  /* ===== 手機版：明細改成小卡（不用左右滑），分頁區貼齊頂端 ===== */
+  @media (max-width: 640px) {
+    .tabs { top: 0; }
+    .tabs::before {
+      content: ""; position: absolute; left: 0; right: 0; bottom: 100%; height: 80px;
+      background: #fff7ee; pointer-events: none;
+    }
+    body.theme-teddy .tabs::before { background: #fbf3ea; }
+    body.theme-leaf .tabs::before { background: #f1faf6; }
+    body.theme-vehicle .tabs::before { background: #f0f6ff; }
+
+    .table-wrap { overflow-x: visible; }
+    .table-wrap table { min-width: 0; }
+    .table-wrap thead { display: none; }
+    .table-wrap tbody tr {
+      display: flex; flex-wrap: wrap; align-items: center; column-gap: 6px; row-gap: 6px;
+      padding: 12px 4px; border-bottom: 2px dashed #f6e6dc;
+    }
+    .table-wrap tbody tr.editing { background: #fff4d6; border-radius: 12px; }
+    .table-wrap tbody td { display: block; padding: 0; border: none; white-space: normal !important; background: none !important; }
+    .table-wrap tbody td.empty { flex: 1 1 100%; padding: 12px 0; }
+    .table-wrap tbody td:empty { display: none; }
+    .table-wrap tbody td.amount { margin-left: auto; font-size: 18px; order: 4; }
+    .table-wrap tbody td.actions { flex: 1 1 100%; order: 9; text-align: right; }
+
+    /* 支出：日期 · 分類 · 付款　金額 / 說明 / 按鈕 */
+    #expenseList td:nth-child(1) { order: 1; color: #8a6e62; font-size: 14px; }
+    #expenseList td:nth-child(2) { order: 2; }
+    #expenseList td:nth-child(3) { order: 3; }
+    #expenseList td:nth-child(4) { order: 5; flex: 1 1 100%; line-height: 1.6; word-break: break-word; }
+    #expenseList td:nth-child(1)::after, #expenseList td:nth-child(2)::after { content: "·"; margin-left: 6px; color: #c9b4a8; }
+
+    /* 收入：日期 · 分類　金額 / 說明 / 按鈕 */
+    #incomeList td:nth-child(1) { order: 1; color: #8a6e62; font-size: 14px; }
+    #incomeList td:nth-child(2) { order: 2; }
+    #incomeList td:nth-child(3) { order: 5; flex: 1 1 100%; line-height: 1.6; word-break: break-word; }
+    #incomeList td:nth-child(1)::after { content: "·"; margin-left: 6px; color: #c9b4a8; }
+
+    /* 最近刪除：日期 · 類型 · 分類　金額 / 說明 / 刪除於… 還剩　按鈕 */
+    #trashList td:nth-child(2) { order: 1; color: #8a6e62; font-size: 14px; }
+    #trashList td:nth-child(3) { order: 2; }
+    #trashList td:nth-child(4) { order: 3; }
+    #trashList td:nth-child(5) { order: 5; flex: 1 1 100%; line-height: 1.6; word-break: break-word; }
+    #trashList td:nth-child(1) { order: 6; font-size: 13px; color: #a08c82; }
+    #trashList td:nth-child(1)::before { content: "刪除於 "; }
+    #trashList td:nth-child(7) { order: 7; }
+    #trashList td.actions { flex: 0 0 auto; margin-left: auto; order: 8; }
+    #trashList td:nth-child(2)::after, #trashList td:nth-child(3)::after { content: "·"; margin-left: 6px; color: #c9b4a8; }
+  }
 </style>
 </head>
 <body>
