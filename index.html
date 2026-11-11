@@ -585,10 +585,21 @@
     #trashList td:nth-child(5) { order: 5; flex: 1 1 100%; line-height: 1.6; word-break: break-word; }
     #trashList td:nth-child(1) { order: 6; font-size: 13px; color: #a08c82; }
     #trashList td:nth-child(1)::before { content: "刪除於 "; }
+    #trashList td.empty::before { content: none; }
     #trashList td:nth-child(7) { order: 7; }
     #trashList td.actions { flex: 0 0 auto; margin-left: auto; order: 8; }
     #trashList td:nth-child(2)::after, #trashList td:nth-child(3)::after { content: "·"; margin-left: 6px; color: #c9b4a8; }
   }
+
+  /* ===== 貼上／複製備份文字 ===== */
+  .paste-row { margin-top: 10px; }
+  .paste-row .link-btn { font-size: 15px; }
+  .backup-text {
+    width: 100%; min-height: 140px; box-sizing: border-box; padding: 10px 12px; margin: 6px 0 12px;
+    font-size: 13px; font-family: monospace; line-height: 1.4; color: #6b5048;
+    border: 2px solid #f3ddd0; border-radius: 14px; background: #fffaf5; resize: vertical;
+  }
+  .modal-msg { margin-bottom: 10px; }
 
   /* ===== LINE 內建瀏覽器提醒 ===== */
   .line-warn {
@@ -614,7 +625,7 @@
     <p class="lw-title">⚠️ 你現在是在 LINE 裡打開記帳本</p>
     <p>LINE 裡記的帳，跟 Safari／Chrome 是<b>分開的</b>。<br>換來換去，帳會被拆成兩半。</p>
     <p class="lw-step">👉 請選擇其他瀏覽器開啟</p>
-    <p class="lw-sub">已經在 LINE 裡記過帳？<br>先到「管理」頁匯出備份，再到瀏覽器匯入。</p>
+    <p class="lw-sub">已經在 LINE 裡記過帳？<br>先到「管理」頁按「複製備份文字」，再用瀏覽器打開記帳本，到「管理」頁按「貼上備份文字」。</p>
     <div class="lw-actions"><button type="button" class="lw-ok" id="lineWarnOk">我知道了</button></div>
   </div>
   <h1><span class="daisy small" aria-hidden="true"></span> <span id="bookTitle">我的記帳本</span> <span class="daisy" aria-hidden="true"></span></h1>
@@ -924,6 +935,8 @@
             <button type="button" class="small-btn" id="importBtn">匯入備份</button>
             <input type="file" id="importFile" accept=".json,application/json" class="hidden">
           </div>
+          <div class="paste-row" id="pasteRow"><button type="button" class="link-btn" id="pasteBtn">從 LINE 搬過來？按這裡「貼上備份文字」</button></div>
+          <p class="list-note hidden" id="lineBackupNote" style="margin:10px 0 0;">你現在是在 LINE 裡打開記帳本。LINE 裡沒辦法下載檔案，所以這裡改成「複製備份文字」：按下去會複製整本帳，再用瀏覽器打開記帳本，到「管理」頁按「貼上備份文字」。</p>
           <p class="list-note" style="margin:10px 0 0;">匯出：所有記帳者的帳和設定，存成一個檔案（「管理」頁裡已刪除的不會匯出）。匯入：把檔案裡的帳合併進來，同一筆不會重複多算。</p>
           <div class="message" id="backupMessage"></div>
         </div>
@@ -994,6 +1007,24 @@
   </div>
 </div>
 
+<div class="modal hidden" id="pasteModal" role="dialog" aria-modal="true" aria-labelledby="pasteTitle">
+  <div class="modal-box">
+    <h2 id="pasteTitle">貼上備份文字</h2>
+    <p class="confirm-text">在下面的框框裡<b>長按 →「貼上」</b>，再按「匯入」。<br>規則跟匯入備份檔一樣：同一筆不會重複多算。</p>
+    <textarea class="backup-text" id="pasteText" placeholder="長按這裡，選「貼上」"></textarea>
+    <div class="message" id="pasteMessage"></div>
+    <button type="button" class="save-btn" id="pasteOk">匯入</button>
+    <button type="button" class="cancel-btn" id="pasteCancel">取消</button>
+  </div>
+</div>
+<div class="modal hidden" id="copyModal" role="dialog" aria-modal="true" aria-labelledby="copyTitle">
+  <div class="modal-box">
+    <h2 id="copyTitle">自己複製備份文字</h2>
+    <p class="confirm-text">這個瀏覽器不讓記帳本自動複製。<br>請在下面的框框裡<b>長按 →「全選」→「拷貝」</b>，再用瀏覽器打開記帳本，到「管理」頁按「貼上備份文字」。</p>
+    <textarea class="backup-text" id="copyText" readonly></textarea>
+    <button type="button" class="cancel-btn" id="copyClose">關閉</button>
+  </div>
+</div>
 <div class="modal confirm-modal hidden" id="importModal" role="alertdialog" aria-modal="true" aria-labelledby="importTitle" aria-describedby="importText">
   <div class="modal-box">
     <h2 id="importTitle">有同名的記帳者</h2>
@@ -1005,6 +1036,8 @@
 </div>
 
 <script>
+  // 是不是在 LINE 內建瀏覽器裡打開（LINE 裡不能下載檔案，資料也跟 Safari／Chrome 分開）
+  var IN_LINE = /\bLine\//i.test(navigator.userAgent || "");
   // ===== 資料保存（沿用原本的 key 與紀錄格式）=====
   // 第一位記帳者沿用原本的保存位置，新的記帳者各自用自己的位置
   var BASE_RECORDS_KEY = "simple-ledger-records";
@@ -2895,9 +2928,9 @@
     if (raw === null) return fallback;
     return JSON.parse(raw); // 壞掉就丟出錯誤，由呼叫的地方處理
   }
-  $("exportBtn").addEventListener("click", function () {
-    var msg = $("backupMessage");
-    if (profilesFailed || loadFailed) { showMessage(msg, "讀取記帳資料時出了問題，目前無法匯出。請重新整理網頁再試一次。", "error"); return; }
+  // 把所有記帳者整理成備份資料；讀不到就回傳 null（並顯示錯誤）
+  function buildBackup(msg) {
+    if (profilesFailed || loadFailed) { showMessage(msg, "讀取記帳資料時出了問題，目前無法匯出。請重新整理網頁再試一次。", "error"); return null; }
     var data = { app: BACKUP_APP, version: 1, exportedAt: new Date().toISOString(), profiles: [] }, total = 0;
     try {
       profiles.forEach(function (pf, i) {
@@ -2908,7 +2941,46 @@
         data.profiles.push({ label: personLabel(pf, i), profile: clone(pf), records: recs, settings: st });
         total += recs.length;
       });
-    } catch (e) { showMessage(msg, "讀取記帳資料時出了問題，目前無法匯出。請重新整理網頁再試一次。", "error"); return; }
+    } catch (e) { showMessage(msg, "讀取記帳資料時出了問題，目前無法匯出。請重新整理網頁再試一次。", "error"); return null; }
+    return { data: data, total: total };
+  }
+  // 複製文字：先用最穩的舊方法，不行再用新方法，都不行就請使用者自己複製
+  function copyText(text, onOk, onFail) {
+    var ok = false;
+    try {
+      var ta = document.createElement("textarea");
+      ta.value = text; ta.setAttribute("readonly", "");
+      ta.style.position = "fixed"; ta.style.top = "0"; ta.style.left = "0"; ta.style.opacity = "0"; ta.style.fontSize = "16px";
+      document.body.appendChild(ta);
+      ta.focus(); ta.select(); ta.setSelectionRange(0, text.length);
+      ok = document.execCommand("copy");
+      ta.remove();
+    } catch (e) { ok = false; }
+    if (ok) { onOk(); return; }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(onOk, onFail);
+    } else onFail();
+  }
+  function lineCopyBackup() {
+    var msg = $("backupMessage");
+    var b = buildBackup(msg);
+    if (!b) return;
+    var text = JSON.stringify(b.data);
+    copyText(text, function () {
+      showMessage(msg, "✅ 已複製 " + b.data.profiles.length + " 位記帳者、共 " + b.total + " 筆紀錄的備份文字。\n下一步：用瀏覽器打開記帳本，到「管理」頁按「貼上備份文字」，長按貼上後按「匯入」。", "ok");
+    }, function () {
+      showMessage(msg, "沒辦法自動複製，請照跳出來的說明自己複製。", "error");
+      $("copyText").value = text;
+      $("copyModal").classList.remove("hidden");
+    });
+  }
+  $("copyClose").addEventListener("click", function () { $("copyModal").classList.add("hidden"); });
+  $("exportBtn").addEventListener("click", function () {
+    var msg = $("backupMessage");
+    if (IN_LINE) { lineCopyBackup(); return; }
+    var b = buildBackup(msg);
+    if (!b) return;
+    var data = b.data, total = b.total;
     try {
       var blob = new Blob([JSON.stringify(data, null, 1)], { type: "application/json" });
       var a = document.createElement("a");
@@ -2927,6 +2999,22 @@
     reader.onload = function () { startImport(String(reader.result)); };
     reader.onerror = function () { showMessage($("backupMessage"), "讀不到這個檔案，請再選一次。", "error"); };
     reader.readAsText(f);
+  });
+
+  // 貼上備份文字（從 LINE 搬到瀏覽器用）
+  $("pasteBtn").addEventListener("click", function () {
+    $("pasteText").value = ""; $("pasteMessage").className = "message"; $("pasteMessage").textContent = "";
+    $("pasteModal").classList.remove("hidden");
+  });
+  $("pasteCancel").addEventListener("click", function () { $("pasteModal").classList.add("hidden"); });
+  $("pasteOk").addEventListener("click", function () {
+    var text = $("pasteText").value.trim();
+    if (!text) { showMessage($("pasteMessage"), "框框裡還是空的。請長按框框，選「貼上」。", "error"); return; }
+    var data;
+    try { data = JSON.parse(text); } catch (e) { data = null; }
+    if (!validBackup(data)) { showMessage($("pasteMessage"), "這段文字不是完整的記帳本備份，可能只貼到一部分。請回到 LINE 再按一次「複製備份文字」，然後重新貼上。", "error"); return; }
+    $("pasteModal").classList.add("hidden");
+    startImport(text);
   });
 
   function validBackup(d) {
@@ -3056,6 +3144,13 @@
     loadProfileData();
     startProfile();
     showMessage(msg, "匯入完成：\n" + report.join("\n"), "ok");
+  }
+
+  // ===== LINE 裡：匯出改成複製文字；貼上功能只在瀏覽器顯示 =====
+  if (IN_LINE) {
+    $("exportBtn").textContent = "複製備份文字";
+    $("lineBackupNote").classList.remove("hidden");
+    $("pasteRow").classList.add("hidden");
   }
 
   // ===== LINE 內建瀏覽器提醒（每次在 LINE 裡打開都會出現）=====
