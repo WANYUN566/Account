@@ -601,6 +601,13 @@
   }
   .modal-msg { margin-bottom: 10px; }
 
+  /* ===== 備份提醒（跟 LINE 提醒同樣式，換成藍色）===== */
+  .line-warn.backup-warn { background: #e5f0ff; border-color: #a9c8f5; box-shadow: 0 4px 0 #a9c8f5; }
+  .line-warn.backup-warn .lw-title, .line-warn.backup-warn b { color: #2c5fa8; }
+  .line-warn.backup-warn .lw-actions { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+  .line-warn.backup-warn .lw-ok { color: #2c5fa8; border-color: #a9c8f5; }
+  .line-warn.backup-warn .lw-go { background: #3b7fd6; color: #fff; border-color: #3b7fd6; }
+
   /* ===== LINE 內建瀏覽器提醒 ===== */
   .line-warn {
     background: #fff4d6; border: 2px solid #ffd36b; box-shadow: 0 4px 0 #ffd36b;
@@ -621,6 +628,15 @@
 </head>
 <body>
 <div class="container">
+  <div class="line-warn backup-warn hidden" id="backupWarn" role="status">
+    <p class="lw-title" id="backupWarnTitle">💾 你還沒備份過喔</p>
+    <p id="backupWarnText">帳只存在這支手機的這個瀏覽器裡。<br>清除資料、換手機或太久沒打開，帳都可能不見。</p>
+    <div class="lw-actions" id="backupWarnActions">
+      <button type="button" class="lw-ok" id="backupLater">之後再說</button>
+      <button type="button" class="lw-ok lw-go" id="backupNow">立即備份</button>
+    </div>
+    <div class="lw-actions hidden" id="backupWarnDone"><button type="button" class="lw-ok" id="backupDoneClose">關閉</button></div>
+  </div>
   <div class="line-warn hidden" id="lineWarn" role="alert">
     <p class="lw-title">⚠️ 你現在是在 LINE 裡打開記帳本</p>
     <p>LINE 裡記的帳，跟 Safari／Chrome 是<b>分開的</b>。<br>換來換去，帳會被拆成兩半。</p>
@@ -929,7 +945,7 @@
       <section class="page" id="page-manage">
         <div class="card">
           <h2>備份（匯出／匯入）</h2>
-          <p class="list-note">記帳資料只存在這台裝置的這個瀏覽器裡。清除瀏覽器資料、換手機、換瀏覽器，帳都會不見。建議每個月按一次「匯出備份」，把檔案存到雲端硬碟或寄到自己信箱。</p>
+          <p class="list-note">記帳資料只存在這台裝置的這個瀏覽器裡。清除瀏覽器資料、換手機、換瀏覽器，帳都會不見。記帳本每 3 天會提醒你按一次「匯出備份」，把檔案存到雲端硬碟或寄到自己信箱。</p>
           <div class="name-row">
             <button type="button" class="small-btn" id="exportBtn">匯出備份</button>
             <button type="button" class="small-btn" id="importBtn">匯入備份</button>
@@ -1330,6 +1346,7 @@
     renderHome(); renderIncome(); renderExpense(); renderPlans();
     renderBudget(); renderGoal(); renderTips();
     renderMonthBar(); relabelMonth(); renderFuture();
+    checkBackupReminder();
     drawCharts();
     renderTrash(); renderPersonTrash();
   }
@@ -2989,6 +3006,7 @@
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(function () { URL.revokeObjectURL(a.href); }, 5000);
     } catch (e) { showMessage(msg, "沒有匯出成功：這個瀏覽器不支援下載檔案。請改用 Chrome 或 Safari 打開記帳本再試一次。", "error"); return; }
+    markBackedUp();
     showMessage(msg, "已匯出 " + data.profiles.length + " 位記帳者、共 " + total + " 筆紀錄。請到「下載」資料夾找「記帳本備份_" + todayString() + ".json」，存到雲端硬碟或寄到自己信箱。", "ok");
   });
   $("importBtn").addEventListener("click", function () { $("importFile").value = ""; $("importFile").click(); });
@@ -3145,6 +3163,50 @@
     startProfile();
     showMessage(msg, "匯入完成：\n" + report.join("\n"), "ok");
   }
+
+  // ===== 備份提醒 =====
+  // 從上次備份算起滿 3 天提醒；從沒備份過的，從第一次看到有帳的時候算 3 天。
+  // 按「之後再說」隔一天再提醒。LINE 裡不提醒（LINE 有自己的提醒）。
+  var LAST_BACKUP_KEY = "simple-ledger-last-backup";
+  var FIRST_RECORD_KEY = "simple-ledger-first-record";
+  var BACKUP_SNOOZE_KEY = "simple-ledger-backup-snooze";
+  var DAY_MS = 24 * 60 * 60 * 1000;
+  function lsNum(k) { try { var v = parseInt(localStorage.getItem(k), 10); return isNaN(v) ? 0 : v; } catch (e) { return 0; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, String(v)); } catch (e) {} }
+  function totalRecords() { var n = 0; profiles.forEach(function (pf) { n += countRecordsOf(pf.id); }); return n; }
+  function markBackedUp() {
+    lsSet(LAST_BACKUP_KEY, Date.now());
+    try { localStorage.removeItem(BACKUP_SNOOZE_KEY); } catch (e) {}
+  }
+  var backupDoneShowing = false;
+  function checkBackupReminder() {
+    var box = $("backupWarn");
+    if (!box || backupDoneShowing) return;
+    if (IN_LINE || totalRecords() === 0) { box.classList.add("hidden"); return; }
+    var now = Date.now();
+    var first = lsNum(FIRST_RECORD_KEY);
+    if (!first) { first = now; lsSet(FIRST_RECORD_KEY, first); }
+    var last = lsNum(LAST_BACKUP_KEY), base = last || first;
+    var due = now - base >= 3 * DAY_MS, snoozed = now < lsNum(BACKUP_SNOOZE_KEY);
+    if (!due || snoozed) { box.classList.add("hidden"); return; }
+    $("backupWarnTitle").textContent = last ? "💾 已經 " + Math.floor((now - last) / DAY_MS) + " 天沒備份了" : "💾 你還沒備份過喔";
+    box.classList.remove("hidden");
+  }
+  $("backupLater").addEventListener("click", function () {
+    lsSet(BACKUP_SNOOZE_KEY, Date.now() + DAY_MS);
+    $("backupWarn").classList.add("hidden");
+  });
+  $("backupNow").addEventListener("click", function () {
+    var before = lsNum(LAST_BACKUP_KEY);
+    $("exportBtn").click();
+    if (lsNum(LAST_BACKUP_KEY) === before) return; // 沒匯出成功：錯誤訊息在「管理」頁，提醒先留著
+    backupDoneShowing = true;
+    $("backupWarnTitle").textContent = "✅ 備份檔下載好了";
+    $("backupWarnText").innerHTML = "請到手機的「下載」找到「記帳本備份_" + todayString() + ".json」（iPhone 在「檔案」App →「下載項目」），<b>存到雲端硬碟或寄到自己信箱</b>。只放在手機裡，換手機時一樣會不見。";
+    $("backupWarnActions").classList.add("hidden");
+    $("backupWarnDone").classList.remove("hidden");
+  });
+  $("backupDoneClose").addEventListener("click", function () { $("backupWarn").classList.add("hidden"); });
 
   // ===== LINE 裡：匯出改成複製文字；貼上功能只在瀏覽器顯示 =====
   if (IN_LINE) {
