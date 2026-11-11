@@ -589,10 +589,34 @@
     #trashList td.actions { flex: 0 0 auto; margin-left: auto; order: 8; }
     #trashList td:nth-child(2)::after, #trashList td:nth-child(3)::after { content: "·"; margin-left: 6px; color: #c9b4a8; }
   }
+
+  /* ===== LINE 內建瀏覽器提醒 ===== */
+  .line-warn {
+    background: #fff4d6; border: 2px solid #ffd36b; box-shadow: 0 4px 0 #ffd36b;
+    border-radius: 18px; padding: 14px 16px; margin: 4px 0 18px; color: #6b5048;
+    font-size: 15px; line-height: 1.7;
+  }
+  .line-warn b { color: #b45309; }
+  .line-warn p { margin: 0 0 8px; }
+  .line-warn .lw-title { font-size: 17px; font-weight: bold; color: #b45309; }
+  .line-warn .lw-step { background: #fff; border-radius: 12px; padding: 8px 12px; font-weight: bold; }
+  .line-warn .lw-sub { font-size: 14px; color: #8a6e62; }
+  .line-warn .lw-actions { text-align: right; margin-top: 4px; }
+  .line-warn .lw-ok {
+    padding: 8px 18px; font-size: 15px; font-family: inherit; font-weight: bold;
+    background: #fff; color: #b45309; border: 2px solid #ffd36b; border-radius: 999px; cursor: pointer;
+  }
 </style>
 </head>
 <body>
 <div class="container">
+  <div class="line-warn hidden" id="lineWarn" role="alert">
+    <p class="lw-title">⚠️ 你現在是在 LINE 裡打開記帳本</p>
+    <p>LINE 裡記的帳，跟 Safari／Chrome 是<b>分開的</b>。<br>換來換去，帳會被拆成兩半。</p>
+    <p class="lw-step">👉 請按「⋮」選單 →「在瀏覽器中開啟」</p>
+    <p class="lw-sub">已經在 LINE 裡記過帳？<br>先到「管理」頁匯出備份，再到瀏覽器匯入。</p>
+    <div class="lw-actions"><button type="button" class="lw-ok" id="lineWarnOk">我知道了</button></div>
+  </div>
   <h1><span class="daisy small" aria-hidden="true"></span> <span id="bookTitle">我的記帳本</span> <span class="daisy" aria-hidden="true"></span></h1>
   <p class="subtitle">記下每天的收入與支出，簡單掌握這個月的收支狀況。</p>
   <p class="local-note">本機儲存 · 僅在此裝置此瀏覽器有效 · <button type="button" class="link-btn" id="goBackupBtn">可匯出備份</button></p>
@@ -3033,6 +3057,14 @@
     startProfile();
     showMessage(msg, "匯入完成：\n" + report.join("\n"), "ok");
   }
+
+  // ===== LINE 內建瀏覽器提醒（每次在 LINE 裡打開都會出現）=====
+  (function () {
+    var box = document.getElementById("lineWarn");
+    if (!box || !/\bLine\//i.test(navigator.userAgent || "")) return;
+    box.classList.remove("hidden");
+    document.getElementById("lineWarnOk").addEventListener("click", function () { box.classList.add("hidden"); });
+  })();
 
   // ===== 初始化 =====
   startProfile();
