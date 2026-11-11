@@ -125,7 +125,7 @@
   .stat .icon { font-size: 26px; display: block; margin-bottom: 2px; }
   .stat .label { font-size: 15px; color: #6b5048; font-weight: bold; margin-bottom: 2px; }
   .stat .hint { font-size: 13px; color: #a08c82; margin-bottom: 6px; }
-  .stat .value { font-size: 26px; font-weight: bold; word-break: break-all; }
+  .stat .value { font-size: 26px; font-weight: bold; white-space: nowrap; }
   .income { color: #2f9a66; }
   .expense { color: #e0505f; }
   .balance { color: #3b7fd6; }
@@ -591,6 +591,32 @@
     #trashList td:nth-child(2)::after, #trashList td:nth-child(3)::after { content: "·"; margin-left: 6px; color: #c9b4a8; }
   }
 
+  /* ===== 收入／支出頁的統計：預設收起來 ===== */
+  .stat-fold { margin-bottom: 18px; }
+  .stat-fold > summary {
+    list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;
+    background: #fff; border: 2px solid #ffe3d3; box-shadow: 0 4px 0 #ffe3d3; border-radius: 18px; padding: 12px 16px;
+    font-size: 16px; color: #6b5048;
+  }
+  .stat-fold > summary::-webkit-details-marker { display: none; }
+  .stat-fold .fold-title b { font-size: 18px; }
+  .stat-fold .fold-hint { font-size: 14px; color: #b0566b; white-space: nowrap; }
+  .stat-fold .when-open, .stat-fold[open] .when-closed { display: none; }
+  .stat-fold[open] .when-open { display: inline; }
+  .stat-fold[open] > summary { margin-bottom: 14px; }
+  .stat-fold .summary { margin-bottom: 6px; }
+  body.theme-teddy .stat-fold > summary { border-color: #f0dcc8; box-shadow: 0 4px 0 #f0dcc8; }
+  body.theme-leaf .stat-fold > summary { border-color: #cfe9df; box-shadow: 0 4px 0 #cfe9df; }
+  body.theme-vehicle .stat-fold > summary { border-color: #d3e3f8; box-shadow: 0 4px 0 #d3e3f8; }
+
+  /* C：說明裡一長串沒有空格的字也能換行，不把表格撐爆 */
+  #expenseList td:nth-child(4), #incomeList td:nth-child(3), #trashList td:nth-child(5) { overflow-wrap: anywhere; }
+  /* D：iPhone 的日期框不超出卡片 */
+  .field input[type=date] { -webkit-appearance: none; appearance: none; display: block; width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; }
+  .field input[type=date]::-webkit-date-and-time-value { text-align: left; }
+  /* E：「儲存總預算」和「分類預算」中間留空隙 */
+  #saveBudgetTotal { margin-bottom: 14px; }
+
   /* ===== 貼上／複製備份文字 ===== */
   .paste-row { margin-top: 10px; }
   .paste-row .link-btn { font-size: 15px; }
@@ -722,51 +748,14 @@
 
       <!-- ===== 收入頁 ===== -->
       <section class="page" id="page-income">
+        <details class="stat-fold" id="incFold">
+          <summary class="fold-bar"><span class="fold-title">📊 本月收入 <b id="incFoldTotal">0</b> 元</span><span class="fold-hint"><span class="when-closed">點開看詳細 ▾</span><span class="when-open">收起來 ▴</span></span></summary>
         <div class="summary">
           <div class="stat stat-income"><span class="icon" aria-hidden="true"><svg viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'><circle cx='22' cy='23' r='16' fill='#ffd84d' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><circle cx='22' cy='23' r='12' fill='#ffe58a' stroke='#f2b632' stroke-width='1.6'/><circle cx='17.25' cy='23' r='1.805' fill='#6b5048'/><circle cx='26.75' cy='23' r='1.805' fill='#6b5048'/><circle cx='17.82' cy='22.335' r='0.57' fill='#fff'/><circle cx='27.32' cy='22.335' r='0.57' fill='#fff'/><ellipse cx='13.925' cy='25.85' rx='2.28' ry='1.4249999999999998' fill='#ff8fa3' opacity='.6'/><ellipse cx='30.075' cy='25.85' rx='2.28' ry='1.4249999999999998' fill='#ff8fa3' opacity='.6'/><path d='M19.91 25.47 q2.09 2.28 4.18 0' stroke='#6b5048' stroke-width='1.4249999999999998' fill='none' stroke-linecap='round'/><circle cx='37' cy='36' r='8' fill='#8ed8b0' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><path d='M37 32 V40 M33 36 H41' stroke='#6b5048' stroke-width='2.4' stroke-linecap='round'/><path d='M9 7 l1 2.2 2.2 1 -2.2 1 -1 2.2 -1 -2.2 -2.2 -1 2.2 -1z' fill='#fff3b0' stroke='#f2b632' stroke-width='1'/></svg></span><div class="label">本月收入</div><div class="hint">這個月收到多少？</div><div class="value income" id="incMonth">0</div></div>
           <div class="stat stat-income"><span class="icon" aria-hidden="true"><svg viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'><path d='M19 15 V11 h10 V15' fill='none' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><rect x='7' y='15' width='34' height='24' rx='6' fill='#f9d3ae' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><path d='M7 23 H41' stroke='#e8b282' stroke-width='2'/><rect x='7' y='15' width='34' height='24' rx='6' fill='none' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><circle cx='19.0' cy='30' r='1.9' fill='#6b5048'/><circle cx='29.0' cy='30' r='1.9' fill='#6b5048'/><circle cx='19.6' cy='29.3' r='0.6' fill='#fff'/><circle cx='29.6' cy='29.3' r='0.6' fill='#fff'/><ellipse cx='15.5' cy='33.0' rx='2.4' ry='1.5' fill='#ff8fa3' opacity='.6'/><ellipse cx='32.5' cy='33.0' rx='2.4' ry='1.5' fill='#ff8fa3' opacity='.6'/><path d='M21.8 32.6 q2.2 2.4 4.4 0' stroke='#6b5048' stroke-width='1.5' fill='none' stroke-linecap='round'/></svg></span><div class="label">本月工資</div><div class="hint">工資類別的合計</div><div class="value income" id="incSalary">0</div></div>
           <div class="stat stat-income"><span class="icon" aria-hidden="true"><svg viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'><rect x='10' y='20' width='28' height='20' rx='5' fill='#ffc2cf' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><rect x='8' y='15' width='32' height='7' rx='3.5' fill='#ff9fb3' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><path d='M24 15 c-3 -6 -10 -5 -8 -1 c1 2 5 1 8 1 c3 0 7 1 8 -1 c2 -4 -5 -5 -8 1z' fill='#fff0a8' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><rect x='22.5' y='22' width='3' height='18' fill='#fff0a8'/><circle cx='19.25' cy='30' r='1.805' fill='#6b5048'/><circle cx='28.75' cy='30' r='1.805' fill='#6b5048'/><circle cx='19.82' cy='29.335' r='0.57' fill='#fff'/><circle cx='29.32' cy='29.335' r='0.57' fill='#fff'/><ellipse cx='15.925' cy='32.85' rx='2.28' ry='1.4249999999999998' fill='#ff8fa3' opacity='.6'/><ellipse cx='32.075' cy='32.85' rx='2.28' ry='1.4249999999999998' fill='#ff8fa3' opacity='.6'/><path d='M21.91 32.47 q2.09 2.28 4.18 0' stroke='#6b5048' stroke-width='1.4249999999999998' fill='none' stroke-linecap='round'/><rect x='10' y='20' width='28' height='20' rx='5' fill='none' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/></svg></span><div class="label">本月其他收入</div><div class="hint">工資以外的合計</div><div class="value income" id="incOther">0</div></div>
         </div>
-
-        <div class="card" id="goalCard">
-          <h2><span class="icon" aria-hidden="true"><svg viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'><rect x='8' y='17' width='32' height='25' rx='10' fill='#c4dbfb' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><path d='M13 36 q11 5 22 0' fill='none' stroke='#9cc2f5' stroke-width='2' stroke-linecap='round'/><rect x='11' y='12' width='26' height='7' rx='3.5' fill='#9cc2f5' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><rect x='19' y='14.3' width='10' height='2.4' rx='1.2' fill='#6b5048'/><circle cx='24' cy='6.5' r='4.6' fill='#ffd84d' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><path d='M24 4.6 V8.4' stroke='#e0a100' stroke-width='1.6' stroke-linecap='round'/><path d='M37 5 l1 2.2 2.2 1 -2.2 1 -1 2.2 -1 -2.2 -2.2 -1 2.2 -1z' fill='#fff3b0' stroke='#f2b632' stroke-width='1'/><circle cx='19.0' cy='28' r='1.9' fill='#6b5048'/><circle cx='29.0' cy='28' r='1.9' fill='#6b5048'/><circle cx='19.6' cy='27.3' r='0.6' fill='#fff'/><circle cx='29.6' cy='27.3' r='0.6' fill='#fff'/><ellipse cx='15.5' cy='31.0' rx='2.4' ry='1.5' fill='#ff8fa3' opacity='.6'/><ellipse cx='32.5' cy='31.0' rx='2.4' ry='1.5' fill='#ff8fa3' opacity='.6'/><path d='M21.8 30.6 q2.2 2.4 4.4 0' stroke='#6b5048' stroke-width='1.5' fill='none' stroke-linecap='round'/></svg></span> 存款目標</h2>
-          <p class="list-note">存下來的錢＝收入 − 支出。設定想存多少，這裡會顯示進度和還差多少。不想設定的留空就好。</p>
-          <div class="form-grid">
-            <div class="field">
-              <label class="title" for="goalMonthly">每月要存（元）</label>
-              <input type="number" id="goalMonthly" min="0" step="any" placeholder="例如：5000" inputmode="decimal">
-            </div>
-            <div class="field">
-              <label class="title" for="goalYearly">每年要存（元）</label>
-              <input type="number" id="goalYearly" min="0" step="any" placeholder="例如：60000" inputmode="decimal">
-            </div>
-          </div>
-          <button type="button" class="save-btn" id="saveGoalBtn">儲存存款目標</button>
-          <div class="message" id="goalMessage"></div>
-          <div id="goalProgress"></div>
-        </div>
-
-
-        <div class="card">
-          <h2><span class="icon" aria-hidden="true"><svg viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'><rect x='8' y='11' width='32' height='29' rx='6' fill='#fff' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><path d='M8 20 V17 a6 6 0 0 1 6 -6 H34 a6 6 0 0 1 6 6 V20 Z' fill='#ff9fb3' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><path d='M17 8 V14 M31 8 V14' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><circle cx='19.0' cy='30' r='1.9' fill='#6b5048'/><circle cx='29.0' cy='30' r='1.9' fill='#6b5048'/><circle cx='19.6' cy='29.3' r='0.6' fill='#fff'/><circle cx='29.6' cy='29.3' r='0.6' fill='#fff'/><ellipse cx='15.5' cy='33.0' rx='2.4' ry='1.5' fill='#ff8fa3' opacity='.6'/><ellipse cx='32.5' cy='33.0' rx='2.4' ry='1.5' fill='#ff8fa3' opacity='.6'/><path d='M21.8 32.6 q2.2 2.4 4.4 0' stroke='#6b5048' stroke-width='1.5' fill='none' stroke-linecap='round'/></svg></span> 固定工資設定</h2>
-          <p class="list-note">如果每個月工資固定，設定好發薪日，到了那天打開記帳本就會自動記入。</p>
-          <div class="field" style="margin-bottom:14px;">
-            <label class="check-line"><input type="checkbox" id="salaryEnabled"> 工資是固定金額，每月自動記入</label>
-          </div>
-          <div class="form-grid" id="salaryFields">
-            <div class="field">
-              <label class="title" for="salaryDay">每月發薪日</label>
-              <select id="salaryDay"></select>
-            </div>
-            <div class="field">
-              <label class="title" for="salaryAmount">每月工資（元）</label>
-              <input type="number" id="salaryAmount" min="0" step="any" placeholder="例如：35000" inputmode="decimal">
-            </div>
-          </div>
-          <button type="button" class="save-btn" id="saveSalaryBtn">儲存設定</button>
-          <div class="message" id="salaryMessage"></div>
-          <div class="salary-status" id="salaryStatus"></div>
-        </div>
+        </details>
 
         <div class="card">
           <h2><span class="icon" aria-hidden="true"><svg viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'><g transform='rotate(40 24 24)'><rect x='17' y='9' width='14' height='24' fill='#ffe08a' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><rect x='17' y='4' width='14' height='7' rx='3' fill='#ffb3c1' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><path d='M17 33 L31 33 L24 44 Z' fill='#f9d3ae' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><path d='M22.3 41.3 L24 44 L25.7 41.3 Z' fill='#6b5048'/><circle cx='20.9' cy='21' r='1.178' fill='#6b5048'/><circle cx='27.1' cy='21' r='1.178' fill='#6b5048'/><circle cx='21.272' cy='20.566' r='0.372' fill='#fff'/><circle cx='27.472' cy='20.566' r='0.372' fill='#fff'/><ellipse cx='18.73' cy='22.86' rx='1.488' ry='0.9299999999999999' fill='#ff8fa3' opacity='.6'/><ellipse cx='29.27' cy='22.86' rx='1.488' ry='0.9299999999999999' fill='#ff8fa3' opacity='.6'/><path d='M22.636 22.612000000000002 q1.364 1.488 2.728 0' stroke='#6b5048' stroke-width='0.9299999999999999' fill='none' stroke-linecap='round'/></g></svg></span> <span id="incFormTitle">記下一筆收入</span></h2>
@@ -783,7 +772,7 @@
               </div>
               <div class="field">
                 <label class="title" for="incAmount">金額（元）</label>
-                <input type="number" id="incAmount" min="0" step="any" placeholder="例如：3000" inputmode="decimal">
+                <input type="number" id="incAmount" min="0" step="any" placeholder="例如：3000" inputmode="numeric">
               </div>
               <div class="field field-wide" id="incOtherField">
                 <label class="title" for="incOtherName" id="incNoteLabel">說明（可不填）</label>
@@ -807,6 +796,46 @@
             </table>
           </div>
         </div>
+
+        <div class="card">
+          <h2><span class="icon" aria-hidden="true"><svg viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'><rect x='8' y='11' width='32' height='29' rx='6' fill='#fff' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><path d='M8 20 V17 a6 6 0 0 1 6 -6 H34 a6 6 0 0 1 6 6 V20 Z' fill='#ff9fb3' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><path d='M17 8 V14 M31 8 V14' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><circle cx='19.0' cy='30' r='1.9' fill='#6b5048'/><circle cx='29.0' cy='30' r='1.9' fill='#6b5048'/><circle cx='19.6' cy='29.3' r='0.6' fill='#fff'/><circle cx='29.6' cy='29.3' r='0.6' fill='#fff'/><ellipse cx='15.5' cy='33.0' rx='2.4' ry='1.5' fill='#ff8fa3' opacity='.6'/><ellipse cx='32.5' cy='33.0' rx='2.4' ry='1.5' fill='#ff8fa3' opacity='.6'/><path d='M21.8 32.6 q2.2 2.4 4.4 0' stroke='#6b5048' stroke-width='1.5' fill='none' stroke-linecap='round'/></svg></span> 固定工資設定</h2>
+          <p class="list-note">如果每個月工資固定，設定好發薪日，到了那天打開記帳本就會自動記入。</p>
+          <div class="field" style="margin-bottom:14px;">
+            <label class="check-line"><input type="checkbox" id="salaryEnabled"> 工資是固定金額，每月自動記入</label>
+          </div>
+          <div class="form-grid" id="salaryFields">
+            <div class="field">
+              <label class="title" for="salaryDay">每月發薪日</label>
+              <select id="salaryDay"></select>
+            </div>
+            <div class="field">
+              <label class="title" for="salaryAmount">每月工資（元）</label>
+              <input type="number" id="salaryAmount" min="0" step="any" placeholder="例如：35000" inputmode="numeric">
+            </div>
+          </div>
+          <button type="button" class="save-btn" id="saveSalaryBtn">儲存設定</button>
+          <div class="message" id="salaryMessage"></div>
+          <div class="salary-status" id="salaryStatus"></div>
+        </div>
+
+        <div class="card" id="goalCard">
+          <h2><span class="icon" aria-hidden="true"><svg viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'><rect x='8' y='17' width='32' height='25' rx='10' fill='#c4dbfb' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><path d='M13 36 q11 5 22 0' fill='none' stroke='#9cc2f5' stroke-width='2' stroke-linecap='round'/><rect x='11' y='12' width='26' height='7' rx='3.5' fill='#9cc2f5' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><rect x='19' y='14.3' width='10' height='2.4' rx='1.2' fill='#6b5048'/><circle cx='24' cy='6.5' r='4.6' fill='#ffd84d' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><path d='M24 4.6 V8.4' stroke='#e0a100' stroke-width='1.6' stroke-linecap='round'/><path d='M37 5 l1 2.2 2.2 1 -2.2 1 -1 2.2 -1 -2.2 -2.2 -1 2.2 -1z' fill='#fff3b0' stroke='#f2b632' stroke-width='1'/><circle cx='19.0' cy='28' r='1.9' fill='#6b5048'/><circle cx='29.0' cy='28' r='1.9' fill='#6b5048'/><circle cx='19.6' cy='27.3' r='0.6' fill='#fff'/><circle cx='29.6' cy='27.3' r='0.6' fill='#fff'/><ellipse cx='15.5' cy='31.0' rx='2.4' ry='1.5' fill='#ff8fa3' opacity='.6'/><ellipse cx='32.5' cy='31.0' rx='2.4' ry='1.5' fill='#ff8fa3' opacity='.6'/><path d='M21.8 30.6 q2.2 2.4 4.4 0' stroke='#6b5048' stroke-width='1.5' fill='none' stroke-linecap='round'/></svg></span> 存款目標</h2>
+          <p class="list-note">存下來的錢＝收入 − 支出。設定想存多少，這裡會顯示進度和還差多少。不想設定的留空就好。</p>
+          <div class="form-grid">
+            <div class="field">
+              <label class="title" for="goalMonthly">每月要存（元）</label>
+              <input type="number" id="goalMonthly" min="0" step="any" placeholder="例如：5000" inputmode="numeric">
+            </div>
+            <div class="field">
+              <label class="title" for="goalYearly">每年要存（元）</label>
+              <input type="number" id="goalYearly" min="0" step="any" placeholder="例如：60000" inputmode="numeric">
+            </div>
+          </div>
+          <button type="button" class="save-btn" id="saveGoalBtn">儲存存款目標</button>
+          <div class="message" id="goalMessage"></div>
+          <div id="goalProgress"></div>
+        </div>
+
         <div class="card">
           <h2><span class="icon" aria-hidden="true"><svg viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'><rect x='7' y='25' width='9' height='15' rx='3.5' fill='#c7efd6' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><rect x='19.5' y='12' width='9' height='28' rx='3.5' fill='#ffc2cf' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><rect x='32' y='19' width='9' height='21' rx='3.5' fill='#c4dbfb' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><path d='M5 40 H43' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><circle cx='21.25' cy='22' r='1.045' fill='#6b5048'/><circle cx='26.75' cy='22' r='1.045' fill='#6b5048'/><circle cx='21.58' cy='21.615' r='0.33' fill='#fff'/><circle cx='27.08' cy='21.615' r='0.33' fill='#fff'/><ellipse cx='19.325' cy='23.65' rx='1.32' ry='0.8250000000000001' fill='#ff8fa3' opacity='.6'/><ellipse cx='28.675' cy='23.65' rx='1.32' ry='0.8250000000000001' fill='#ff8fa3' opacity='.6'/><path d='M22.79 23.43 q1.2100000000000002 1.32 2.4200000000000004 0' stroke='#6b5048' stroke-width='0.8250000000000001' fill='none' stroke-linecap='round'/></svg></span> 近 6 個月收入</h2>
           <p class="list-note">每個月收入的變化，一眼就看得到。</p>
@@ -816,40 +845,17 @@
 
       <!-- ===== 支出頁 ===== -->
       <section class="page" id="page-expense">
+        <details class="stat-fold" id="expFold">
+          <summary class="fold-bar"><span class="fold-title">📊 本月支出 <b id="expFoldTotal">0</b> 元</span><span class="fold-hint"><span class="when-closed">點開看詳細 ▾</span><span class="when-open">收起來 ▴</span></span></summary>
         <div class="summary">
           <div class="stat stat-card"><span class="icon" aria-hidden="true"><svg viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'><rect x='6' y='12' width='36' height='25' rx='6' fill='#ddd0ff' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><rect x='7' y='17' width='34' height='4' fill='#b9a2f0'/><rect x='10' y='30' width='7' height='3' rx='1.5' fill='#fff' opacity='.9'/><rect x='6' y='12' width='36' height='25' rx='6' fill='none' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><circle cx='22.75' cy='27' r='1.615' fill='#6b5048'/><circle cx='31.25' cy='27' r='1.615' fill='#6b5048'/><circle cx='23.26' cy='26.405' r='0.51' fill='#fff'/><circle cx='31.76' cy='26.405' r='0.51' fill='#fff'/><ellipse cx='19.775' cy='29.55' rx='2.04' ry='1.275' fill='#ff8fa3' opacity='.6'/><ellipse cx='34.225' cy='29.55' rx='2.04' ry='1.275' fill='#ff8fa3' opacity='.6'/><path d='M25.13 29.21 q1.87 2.04 3.74 0' stroke='#6b5048' stroke-width='1.275' fill='none' stroke-linecap='round'/></svg></span><div class="label">本月信用卡</div><div class="hint">刷卡花了多少？</div><div class="value card-color" id="expCard">0</div></div>
           <div class="stat stat-cash"><span class="icon" aria-hidden="true"><svg viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'><rect x='6' y='12' width='36' height='25' rx='6' fill='#c7efd6' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><circle cx='11.5' cy='17.5' r='1.8' fill='#8ed8b0'/><circle cx='36.5' cy='31.5' r='1.8' fill='#8ed8b0'/><circle cx='19.0' cy='24' r='1.9' fill='#6b5048'/><circle cx='29.0' cy='24' r='1.9' fill='#6b5048'/><circle cx='19.6' cy='23.3' r='0.6' fill='#fff'/><circle cx='29.6' cy='23.3' r='0.6' fill='#fff'/><ellipse cx='15.5' cy='27.0' rx='2.4' ry='1.5' fill='#ff8fa3' opacity='.6'/><ellipse cx='32.5' cy='27.0' rx='2.4' ry='1.5' fill='#ff8fa3' opacity='.6'/><path d='M21.8 26.6 q2.2 2.4 4.4 0' stroke='#6b5048' stroke-width='1.5' fill='none' stroke-linecap='round'/></svg></span><div class="label">本月現金</div><div class="hint">付現花了多少？</div><div class="value cash-color" id="expCash">0</div></div>
           <div class="stat stat-expense"><span class="icon" aria-hidden="true"><svg viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'><path d='M3 9 H8.5 L13 31 H38' fill='none' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><path d='M10 14 H43 L39.5 29 H13.2 Z' fill='#ffc2cf' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><circle cx='22.0' cy='20.5' r='1.71' fill='#6b5048'/><circle cx='31.0' cy='20.5' r='1.71' fill='#6b5048'/><circle cx='22.54' cy='19.87' r='0.54' fill='#fff'/><circle cx='31.54' cy='19.87' r='0.54' fill='#fff'/><ellipse cx='18.85' cy='23.2' rx='2.16' ry='1.35' fill='#ff8fa3' opacity='.6'/><ellipse cx='34.15' cy='23.2' rx='2.16' ry='1.35' fill='#ff8fa3' opacity='.6'/><path d='M24.52 22.84 q1.9800000000000002 2.16 3.9600000000000004 0' stroke='#6b5048' stroke-width='1.35' fill='none' stroke-linecap='round'/><circle cx='17' cy='38' r='3.6' fill='#fff' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><circle cx='34' cy='38' r='3.6' fill='#fff' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/></svg></span><div class="label">本月支出合計</div><div class="hint">信用卡＋現金</div><div class="value expense" id="expTotal">0</div></div>
         </div>
         <p class="total-line hidden" id="expUnmarkedLine"></p>
+        </details>
+
         <div class="budget-alert hidden" id="budgetAlertExp" role="status"></div>
-
-        <div class="card" id="budgetCard">
-          <h2><span class="icon" aria-hidden="true"><svg viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'><rect x='6' y='12' width='36' height='25' rx='6' fill='#c7efd6' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><circle cx='11.5' cy='17.5' r='1.8' fill='#8ed8b0'/><circle cx='36.5' cy='31.5' r='1.8' fill='#8ed8b0'/><circle cx='19.0' cy='24' r='1.9' fill='#6b5048'/><circle cx='29.0' cy='24' r='1.9' fill='#6b5048'/><circle cx='19.6' cy='23.3' r='0.6' fill='#fff'/><circle cx='29.6' cy='23.3' r='0.6' fill='#fff'/><ellipse cx='15.5' cy='27.0' rx='2.4' ry='1.5' fill='#ff8fa3' opacity='.6'/><ellipse cx='32.5' cy='27.0' rx='2.4' ry='1.5' fill='#ff8fa3' opacity='.6'/><path d='M21.8 26.6 q2.2 2.4 4.4 0' stroke='#6b5048' stroke-width='1.5' fill='none' stroke-linecap='round'/></svg></span> 每月預算</h2>
-          <p class="list-note">設定每個月最多想花多少。用到 80% 會提醒你，超過會標示「已超支」。沒設定的就不限制。</p>
-          <div class="budget-set">
-            <div class="field">
-              <label class="title" for="budgetTotal">每月總預算（元）</label>
-              <div class="name-row">
-                <input type="number" id="budgetTotal" min="0" step="any" placeholder="例如：20000" inputmode="decimal">
-                <button type="button" class="small-btn" id="saveBudgetTotal">儲存總預算</button>
-              </div>
-            </div>
-            <div class="field">
-              <label class="title" for="budgetCat">分類預算</label>
-              <div class="name-row budget-cat-row">
-                <select id="budgetCat"></select>
-                <input type="number" id="budgetCatAmount" min="0" step="any" placeholder="每月上限，例如：6000" inputmode="decimal">
-                <button type="button" class="small-btn" id="saveBudgetCat">加入／更新</button>
-              </div>
-            </div>
-          </div>
-          <div class="message" id="budgetMessage"></div>
-          <h3>本月預算使用情況</h3>
-          <div id="budgetProgress"></div>
-        </div>
-
-
 
         <div class="card">
           <h2><span class="icon" aria-hidden="true"><svg viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'><g transform='rotate(40 24 24)'><rect x='17' y='9' width='14' height='24' fill='#ffe08a' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><rect x='17' y='4' width='14' height='7' rx='3' fill='#ffb3c1' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><path d='M17 33 L31 33 L24 44 Z' fill='#f9d3ae' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><path d='M22.3 41.3 L24 44 L25.7 41.3 Z' fill='#6b5048'/><circle cx='20.9' cy='21' r='1.178' fill='#6b5048'/><circle cx='27.1' cy='21' r='1.178' fill='#6b5048'/><circle cx='21.272' cy='20.566' r='0.372' fill='#fff'/><circle cx='27.472' cy='20.566' r='0.372' fill='#fff'/><ellipse cx='18.73' cy='22.86' rx='1.488' ry='0.9299999999999999' fill='#ff8fa3' opacity='.6'/><ellipse cx='29.27' cy='22.86' rx='1.488' ry='0.9299999999999999' fill='#ff8fa3' opacity='.6'/><path d='M22.636 22.612000000000002 q1.364 1.488 2.728 0' stroke='#6b5048' stroke-width='0.9299999999999999' fill='none' stroke-linecap='round'/></g></svg></span> <span id="expFormTitle">記下一筆支出</span></h2>
@@ -873,7 +879,7 @@
               </div>
               <div class="field">
                 <label class="title" for="expAmount" id="expAmountLabel">金額（元）</label>
-                <input type="number" id="expAmount" min="0" step="any" placeholder="例如：120" inputmode="decimal">
+                <input type="number" id="expAmount" min="0" step="any" placeholder="例如：120" inputmode="numeric">
               </div>
               <div class="field field-wide">
                 <label class="title" for="expItem" id="expItemLabel">買了什麼（可不填）</label>
@@ -896,7 +902,7 @@
               </div>
               <div class="field hidden" id="instInterestField">
                 <label class="title" for="instInterest">每期利息（元，沒有可不填）</label>
-                <input type="number" id="instInterest" min="0" step="any" placeholder="例如：50" inputmode="decimal">
+                <input type="number" id="instInterest" min="0" step="any" placeholder="例如：50" inputmode="numeric">
               </div>
               <div class="field field-wide hidden" id="instAutoField">
                 <label class="check-line"><input type="checkbox" id="instAuto"> 每月自動記入一期（建議勾選）</label>
@@ -911,13 +917,6 @@
           </form>
         </div>
 
-        <div class="card hidden" id="planCard">
-          <h2><span class="icon" aria-hidden="true"><svg viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'><rect x='8' y='11' width='32' height='29' rx='6' fill='#fff' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><path d='M8 20 V17 a6 6 0 0 1 6 -6 H34 a6 6 0 0 1 6 6 V20 Z' fill='#ff9fb3' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><path d='M17 8 V14 M31 8 V14' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><circle cx='19.0' cy='30' r='1.9' fill='#6b5048'/><circle cx='29.0' cy='30' r='1.9' fill='#6b5048'/><circle cx='19.6' cy='29.3' r='0.6' fill='#fff'/><circle cx='29.6' cy='29.3' r='0.6' fill='#fff'/><ellipse cx='15.5' cy='33.0' rx='2.4' ry='1.5' fill='#ff8fa3' opacity='.6'/><ellipse cx='32.5' cy='33.0' rx='2.4' ry='1.5' fill='#ff8fa3' opacity='.6'/><path d='M21.8 32.6 q2.2 2.4 4.4 0' stroke='#6b5048' stroke-width='1.5' fill='none' stroke-linecap='round'/></svg></span> 每月自動加入</h2>
-          <p class="list-note">這裡列出每月自動記入的支出：房租、訂閱服務等固定支出，以及保險費、貸款分期。</p>
-          <div id="planList"></div>
-          <div class="message" id="planMessage"></div>
-        </div>
-
         <div class="card">
           <h2><span class="icon" aria-hidden="true"><svg viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'><rect x='10' y='7' width='29' height='34' rx='5' fill='#ffdcb0' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><path d='M16 7 V41' stroke='#f2b67a' stroke-width='3'/><rect x='10' y='7' width='29' height='34' rx='5' fill='none' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><circle cx='23.0' cy='25' r='1.71' fill='#6b5048'/><circle cx='32.0' cy='25' r='1.71' fill='#6b5048'/><circle cx='23.54' cy='24.37' r='0.54' fill='#fff'/><circle cx='32.54' cy='24.37' r='0.54' fill='#fff'/><ellipse cx='19.85' cy='27.7' rx='2.16' ry='1.35' fill='#ff8fa3' opacity='.6'/><ellipse cx='35.15' cy='27.7' rx='2.16' ry='1.35' fill='#ff8fa3' opacity='.6'/><path d='M25.52 27.34 q1.9800000000000002 2.16 3.9600000000000004 0' stroke='#6b5048' stroke-width='1.35' fill='none' stroke-linecap='round'/></svg></span> 支出明細</h2>
           <div class="list-tools"><span id="expListInfo"></span><button type="button" class="link-btn" id="expAllBtn">看全部月份</button></div>
@@ -928,11 +927,45 @@
             </table>
           </div>
         </div>
+
+        <div class="card" id="budgetCard">
+          <h2><span class="icon" aria-hidden="true"><svg viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'><rect x='6' y='12' width='36' height='25' rx='6' fill='#c7efd6' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><circle cx='11.5' cy='17.5' r='1.8' fill='#8ed8b0'/><circle cx='36.5' cy='31.5' r='1.8' fill='#8ed8b0'/><circle cx='19.0' cy='24' r='1.9' fill='#6b5048'/><circle cx='29.0' cy='24' r='1.9' fill='#6b5048'/><circle cx='19.6' cy='23.3' r='0.6' fill='#fff'/><circle cx='29.6' cy='23.3' r='0.6' fill='#fff'/><ellipse cx='15.5' cy='27.0' rx='2.4' ry='1.5' fill='#ff8fa3' opacity='.6'/><ellipse cx='32.5' cy='27.0' rx='2.4' ry='1.5' fill='#ff8fa3' opacity='.6'/><path d='M21.8 26.6 q2.2 2.4 4.4 0' stroke='#6b5048' stroke-width='1.5' fill='none' stroke-linecap='round'/></svg></span> 每月預算</h2>
+          <p class="list-note">設定每個月最多想花多少。用到 80% 會提醒你，超過會標示「已超支」。沒設定的就不限制。</p>
+          <div class="budget-set">
+            <div class="field">
+              <label class="title" for="budgetTotal">每月總預算（元）</label>
+              <div class="name-row">
+                <input type="number" id="budgetTotal" min="0" step="any" placeholder="例如：20000" inputmode="numeric">
+                <button type="button" class="small-btn" id="saveBudgetTotal">儲存總預算</button>
+              </div>
+            </div>
+            <div class="field">
+              <label class="title" for="budgetCat">分類預算</label>
+              <div class="name-row budget-cat-row">
+                <select id="budgetCat"></select>
+                <input type="number" id="budgetCatAmount" min="0" step="any" placeholder="每月上限，例如：6000" inputmode="numeric">
+                <button type="button" class="small-btn" id="saveBudgetCat">加入／更新</button>
+              </div>
+            </div>
+          </div>
+          <div class="message" id="budgetMessage"></div>
+          <h3>本月預算使用情況</h3>
+          <div id="budgetProgress"></div>
+        </div>
+
+        <div class="card hidden" id="planCard">
+          <h2><span class="icon" aria-hidden="true"><svg viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'><rect x='8' y='11' width='32' height='29' rx='6' fill='#fff' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><path d='M8 20 V17 a6 6 0 0 1 6 -6 H34 a6 6 0 0 1 6 6 V20 Z' fill='#ff9fb3' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><path d='M17 8 V14 M31 8 V14' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><circle cx='19.0' cy='30' r='1.9' fill='#6b5048'/><circle cx='29.0' cy='30' r='1.9' fill='#6b5048'/><circle cx='19.6' cy='29.3' r='0.6' fill='#fff'/><circle cx='29.6' cy='29.3' r='0.6' fill='#fff'/><ellipse cx='15.5' cy='33.0' rx='2.4' ry='1.5' fill='#ff8fa3' opacity='.6'/><ellipse cx='32.5' cy='33.0' rx='2.4' ry='1.5' fill='#ff8fa3' opacity='.6'/><path d='M21.8 32.6 q2.2 2.4 4.4 0' stroke='#6b5048' stroke-width='1.5' fill='none' stroke-linecap='round'/></svg></span> 每月自動加入</h2>
+          <p class="list-note">這裡列出每月自動記入的支出：房租、訂閱服務等固定支出，以及保險費、貸款分期。</p>
+          <div id="planList"></div>
+          <div class="message" id="planMessage"></div>
+        </div>
+
         <div class="card">
           <h2><span class="icon" aria-hidden="true"><svg viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'><rect x='7' y='25' width='9' height='15' rx='3.5' fill='#c7efd6' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><rect x='19.5' y='12' width='9' height='28' rx='3.5' fill='#ffc2cf' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><rect x='32' y='19' width='9' height='21' rx='3.5' fill='#c4dbfb' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><path d='M5 40 H43' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><circle cx='21.25' cy='22' r='1.045' fill='#6b5048'/><circle cx='26.75' cy='22' r='1.045' fill='#6b5048'/><circle cx='21.58' cy='21.615' r='0.33' fill='#fff'/><circle cx='27.08' cy='21.615' r='0.33' fill='#fff'/><ellipse cx='19.325' cy='23.65' rx='1.32' ry='0.8250000000000001' fill='#ff8fa3' opacity='.6'/><ellipse cx='28.675' cy='23.65' rx='1.32' ry='0.8250000000000001' fill='#ff8fa3' opacity='.6'/><path d='M22.79 23.43 q1.2100000000000002 1.32 2.4200000000000004 0' stroke='#6b5048' stroke-width='0.8250000000000001' fill='none' stroke-linecap='round'/></svg></span> 近 6 個月支出</h2>
           <p class="list-note">每個月刷卡和付現各花了多少。</p>
           <div class="chart" id="expenseTrendChart" role="img" aria-label="近 6 個月每月信用卡與現金支出堆疊長條圖"></div>
         </div>
+
         <div class="card" id="futureCard">
           <h2><span class="icon" aria-hidden="true"><svg viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'><rect x='8' y='11' width='32' height='29' rx='6' fill='#fff' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><path d='M8 20 V17 a6 6 0 0 1 6 -6 H34 a6 6 0 0 1 6 6 V20 Z' fill='#ff9fb3' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><path d='M17 8 V14 M31 8 V14' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><circle cx='19.0' cy='30' r='1.9' fill='#6b5048'/><circle cx='29.0' cy='30' r='1.9' fill='#6b5048'/><circle cx='19.6' cy='29.3' r='0.6' fill='#fff'/><circle cx='29.6' cy='29.3' r='0.6' fill='#fff'/><ellipse cx='15.5' cy='33.0' rx='2.4' ry='1.5' fill='#ff8fa3' opacity='.6'/><ellipse cx='32.5' cy='33.0' rx='2.4' ry='1.5' fill='#ff8fa3' opacity='.6'/><path d='M21.8 32.6 q2.2 2.4 4.4 0' stroke='#6b5048' stroke-width='1.5' fill='none' stroke-linecap='round'/></svg></span> 未來分期</h2>
           <p class="list-note">一眼看出接下來 6 個月，每個月還要繳多少分期。點任何一個月份，可以看到那個月有哪幾筆。</p>
@@ -1207,7 +1240,7 @@
   try { privacyOn = localStorage.getItem(PRIVACY_KEY) === "1"; } catch (e) {}
   function formatMoney(n) {
     if (privacyOn) return "****";
-    var rounded = Math.round(n * 100) / 100;
+    var rounded = (n < 0 ? -1 : 1) * Math.round(Math.abs(n) * 100) / 100;
     return rounded.toLocaleString("zh-TW", { maximumFractionDigits: 2 });
   }
   var idSeed = 0;
@@ -1347,6 +1380,7 @@
     renderBudget(); renderGoal(); renderTips();
     renderMonthBar(); relabelMonth(); renderFuture();
     checkBackupReminder();
+    if (typeof fitSoon === "function") fitSoon();
     drawCharts();
     renderTrash(); renderPersonTrash();
   }
@@ -1612,6 +1646,7 @@
     var total = 0, salary = 0;
     month.forEach(function (r) { total += r.amount; if (r.category === "工資" || r.category === "薪資") salary += r.amount; });
     $("incMonth").textContent = formatMoney(total);
+    $("incFoldTotal").textContent = formatMoney(total);
     $("incSalary").textContent = formatMoney(salary);
     $("incOther").textContent = formatMoney(total - salary);
 
@@ -1662,6 +1697,7 @@
     $("expCard").textContent = formatMoney(card);
     $("expCash").textContent = formatMoney(cash);
     $("expTotal").textContent = formatMoney(card + cash + none);
+    $("expFoldTotal").textContent = formatMoney(card + cash + none);
     var line = $("expUnmarkedLine");
     if (none > 0) {
       line.textContent = "合計裡有 " + formatMoney(none) + " 元是舊版紀錄，當時沒有標示付款方式。";
@@ -1762,6 +1798,7 @@
   function readAmount(input, msgEl) {
     var amount = parseFloat(input.value);
     if (isNaN(amount) || amount <= 0) { showMessage(msgEl, "請輸入大於 0 的金額。", "error"); return null; }
+    if (Math.floor(amount) !== amount) { showMessage(msgEl, "金額請輸入整數，不用小數點。", "error"); return null; }
     return amount;
   }
 
@@ -1867,6 +1904,7 @@
     var day = parseInt($("salaryDay").value, 10);
     var amount = parseFloat($("salaryAmount").value);
     if (enabled && (isNaN(amount) || amount <= 0)) { showMessage(msg, "請輸入大於 0 的每月工資。", "error"); return; }
+    if (enabled && Math.floor(amount) !== amount) { showMessage(msg, "每月工資請輸入整數，不用小數點。", "error"); return; }
 
     var newSettings = clone(settings);
     var s = newSettings.salary;
@@ -2064,6 +2102,7 @@
     if (isNewInstallment()) {
       var interest = parseFloat($("instInterest").value);
       if ($("instInterest").value !== "" && (isNaN(interest) || interest < 0)) { showMessage(msg, "每期利息請填 0 或以上的數字。", "error"); return; }
+      if (!isNaN(interest) && Math.floor(interest) !== interest) { showMessage(msg, "每期利息請輸入整數，不用小數點。", "error"); return; }
       if (isNaN(interest)) interest = 0;
       var per = round2(amount / rec.installment + interest);
       rec.interest = interest;
@@ -2173,11 +2212,13 @@
   $("saveBudgetTotal").addEventListener("click", function () {
     var v = $("budgetTotal").value.trim(), n = parseFloat(v);
     if (v !== "" && (isNaN(n) || n <= 0)) { showMessage($("budgetMessage"), "總預算請填大於 0 的數字；不想設定就留空。", "error"); return; }
+    if (v !== "" && Math.floor(n) !== n) { showMessage($("budgetMessage"), "總預算請輸入整數，不用小數點。", "error"); return; }
     saveBudget(function (b) { b.total = v === "" ? 0 : n; }, v === "" ? "已取消每月總預算。" : "每月總預算設為 " + formatMoney(n) + " 元。");
   });
   $("saveBudgetCat").addEventListener("click", function () {
     var c = $("budgetCat").value, n = parseFloat($("budgetCatAmount").value);
     if (isNaN(n) || n <= 0) { showMessage($("budgetMessage"), "請填「" + c + "」每月的上限金額（大於 0）。", "error"); return; }
+    if (Math.floor(n) !== n) { showMessage($("budgetMessage"), "分類預算請輸入整數，不用小數點。", "error"); return; }
     saveBudget(function (b) { b.cats[c] = n; }, "「" + c + "」每月預算設為 " + formatMoney(n) + " 元。");
     $("budgetCatAmount").value = "";
   });
@@ -2236,6 +2277,7 @@
     var mv = $("goalMonthly").value.trim(), yv = $("goalYearly").value.trim();
     var m = parseFloat(mv), yy = parseFloat(yv);
     if ((mv !== "" && (isNaN(m) || m <= 0)) || (yv !== "" && (isNaN(yy) || yy <= 0))) { showMessage(msg, "存款目標請填大於 0 的數字；不想設定就留空。", "error"); return; }
+    if ((mv !== "" && Math.floor(m) !== m) || (yv !== "" && Math.floor(yy) !== yy)) { showMessage(msg, "存款目標請輸入整數，不用小數點。", "error"); return; }
     var ns = clone(settings);
     ns.goal.monthly = mv === "" ? 0 : m; ns.goal.yearly = yv === "" ? 0 : yy;
     if (!saveAll(records, ns)) { showMessage(msg, "存款目標沒有存下來：瀏覽器無法保存資料，請稍後再試。", "error"); return; }
@@ -3163,6 +3205,20 @@
     startProfile();
     showMessage(msg, "匯入完成：\n" + report.join("\n"), "ok");
   }
+
+  // ===== 統計數字太長時縮小字，不從中間斷開 =====
+  function fitStatValues() {
+    document.querySelectorAll(".stat .value").forEach(function (el) {
+      el.style.fontSize = "";
+      if (!el.clientWidth) return; // 看不到的（別的分頁、收起來的）先不算
+      var size = parseFloat(getComputedStyle(el).fontSize);
+      while (el.scrollWidth > el.clientWidth && size > 12) { size -= 1; el.style.fontSize = size + "px"; }
+    });
+  }
+  function fitSoon() { (window.requestAnimationFrame || setTimeout)(fitStatValues); }
+  document.addEventListener("click", fitSoon);
+  window.addEventListener("resize", fitSoon);
+  document.querySelectorAll(".stat-fold").forEach(function (d) { d.addEventListener("toggle", fitSoon); });
 
   // ===== 備份提醒 =====
   // 從上次備份算起滿 3 天提醒；從沒備份過的，從第一次看到有帳的時候算 3 天。
