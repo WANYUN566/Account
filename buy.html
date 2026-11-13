@@ -4,133 +4,294 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>我的記帳本｜知道錢花到哪裡去</title>
-<meta name="description" content="給所有想記帳的人。記收入、支出，一眼看出這個月錢花最多的是哪一類。帳只存在你自己的手機裡。">
+<meta name="description" content="打開手機瀏覽器就能記帳。記收入、支出，一眼看出這個月錢花最多的是哪一類。帳只存在你自己的手機裡。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #fff7ee; --card: #ffffff; --line: #ffe3d3; --text: #5a4a42; --muted: #8a7a72;
-    --pink: #e85a7a; --pink-dark: #c4405f; --green: #2f9a66; --soft: #fff1e6;
+    --pink: #e85a7a; --pink-dark: #c4405f; --pink-soft: #ffe8ee; --soft: #fff1e6; --yellow: #fff4d6;
   }
   * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
   body {
-    margin: 0; background: var(--bg); color: var(--text);
+    margin: 0; color: var(--text); font-size: 17px; line-height: 1.75;
     font-family: "Huninn", "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
-    font-size: 17px; line-height: 1.75;
+    background-color: var(--bg);
+    background-image: radial-gradient(circle at 20px 20px, #ffe9d6 3px, transparent 4px);
+    background-size: 64px 64px;
   }
-  .wrap { max-width: 760px; margin: 0 auto; padding: 0 16px 120px; }
+  a { color: var(--pink-dark); }
+  .wrap { max-width: 780px; margin: 0 auto; padding: 0 16px 110px; }
+
+  /* 導覽列 */
+  .nav {
+    position: sticky; top: 0; z-index: 10; background: rgba(255,247,238,.95);
+    border-bottom: 2px solid var(--line); overflow-x: auto; white-space: nowrap;
+  }
+  .nav-in { max-width: 780px; margin: 0 auto; padding: 8px 12px; display: flex; gap: 6px; }
+  .nav a {
+    text-decoration: none; color: var(--text); font-size: 15px; padding: 6px 12px;
+    border-radius: 999px; border: 2px solid transparent;
+  }
+  .nav a:hover { border-color: var(--line); background: #fff; }
+  section { scroll-margin-top: 64px; }
+
+  /* 開頭 */
+  .hero { text-align: center; padding: 40px 0 10px; }
+  .brand { display: inline-block; font-size: 14px; color: var(--muted); background: #fff; border: 2px solid var(--line); border-radius: 999px; padding: 2px 14px; }
+  h1 { color: var(--pink); font-size: 38px; line-height: 1.3; margin: 14px 0 8px; }
+  .hero .lead { font-size: 19px; margin: 0 auto; max-width: 520px; }
+  .hero-card {
+    margin: 22px auto 0; max-width: 340px; background: #fff; border: 2px solid var(--line);
+    box-shadow: 0 6px 0 var(--line); border-radius: 22px; padding: 16px 18px; text-align: left;
+  }
+  .hero-card .row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 2px dashed #f6e6dc; font-size: 16px; }
+  .hero-card .row:last-of-type { border-bottom: none; }
+  .hero-card .amt { color: #e0505f; font-weight: bold; }
+  .hero-card .tip { margin-top: 8px; background: var(--yellow); border-radius: 12px; padding: 8px 10px; font-size: 14px; }
+
   .card {
     background: var(--card); border: 2px solid var(--line); box-shadow: 0 6px 0 var(--line);
-    border-radius: 22px; padding: 22px 20px; margin: 22px 0;
+    border-radius: 22px; padding: 24px 20px; margin: 26px 0;
   }
-  h1 { color: var(--pink); font-size: 34px; line-height: 1.3; margin: 34px 0 6px; text-align: center; }
-  h2 { font-size: 22px; margin: 0 0 12px; }
-  .lead { text-align: center; font-size: 19px; margin: 0 0 6px; }
-  .sub { text-align: center; color: var(--muted); font-size: 15px; margin: 0; }
-  ul { margin: 0; padding-left: 1.2em; }
-  li { margin: 4px 0; }
-  .price-box { text-align: center; }
-  .price { font-size: 44px; font-weight: bold; color: var(--pink); line-height: 1.2; }
+  h2 { font-size: 24px; margin: 0 0 14px; }
+  h2 .i { margin-right: 6px; }
+  .note { color: var(--muted); font-size: 15px; margin: -6px 0 14px; }
+
+  /* 痛點 */
+  .pain .big { font-size: 20px; font-weight: bold; margin: 0 0 10px; }
+  .bubbles { display: grid; gap: 8px; margin: 12px 0 16px; }
+  .bubble { background: var(--soft); border-radius: 16px; padding: 8px 14px; width: fit-content; max-width: 100%; }
+  .pain p { margin: 0 0 10px; }
+  .pain .cta-line { color: var(--pink-dark); font-weight: bold; text-align: center; margin-top: 16px; }
+
+  /* 功能 */
+  .features { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .features li { background: var(--soft); border-radius: 16px; padding: 14px; }
+  .features b { display: block; font-size: 17px; margin-bottom: 2px; }
+  .features span { font-size: 15px; color: var(--muted); }
+
+  /* 實際畫面：左右滑 */
+  .slider { position: relative; }
+  .track { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 4px 2px 10px; -webkit-overflow-scrolling: touch; }
+  .slide { flex: 0 0 82%; max-width: 320px; scroll-snap-align: center; margin: 0; }
+  .slide .frame { height: 420px; overflow: hidden; overflow: clip; border-radius: 16px; border: 2px solid var(--line); background: #fff7ee; }
+  .slide img { width: 100%; height: auto; display: block; }
+  .slide .frame.bottom { display: flex; flex-direction: column; justify-content: flex-end; }
+  .slide figcaption { margin-top: 8px; font-size: 15px; }
+  .slide figcaption .n { display: inline-block; width: 24px; height: 24px; line-height: 24px; text-align: center; border-radius: 50%; background: var(--pink); color: #fff; font-size: 14px; margin-right: 6px; }
+  .slide figcaption small { display: block; color: var(--muted); font-size: 14px; }
+  .slider-ctrl { display: flex; justify-content: center; align-items: center; gap: 14px; margin-top: 6px; color: var(--muted); font-size: 14px; }
+  .slider-ctrl button { width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--line); background: #fff; font-size: 20px; color: var(--text); cursor: pointer; font-family: inherit; }
+
+  /* 價格 */
+  .price-card { text-align: center; background: linear-gradient(#fff, #fff4f6); }
+  .price { font-size: 46px; font-weight: bold; color: var(--pink); line-height: 1.2; margin: 6px 0; }
   .price small { font-size: 18px; color: var(--muted); font-weight: normal; }
+  .price-card ul { text-align: left; max-width: 460px; margin: 14px auto; padding-left: 1.3em; }
   .buy-btn {
-    display: inline-block; margin-top: 14px; padding: 14px 34px; border-radius: 999px;
-    background: var(--pink); color: #fff; font-size: 20px; font-weight: bold; text-decoration: none;
-    box-shadow: 0 5px 0 var(--pink-dark);
+    display: inline-block; padding: 14px 34px; border-radius: 999px; background: var(--pink); color: #fff;
+    font-size: 20px; font-weight: bold; text-decoration: none; box-shadow: 0 5px 0 var(--pink-dark);
   }
   .buy-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--pink-dark); }
-  .buy-note { color: var(--muted); font-size: 14px; margin: 12px 0 0; }
-  .shots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 8px; }
-  .shots figure { margin: 0; }
-  .shots img { width: 100%; height: auto; border-radius: 14px; border: 2px solid var(--line); display: block; }
-  .shots figcaption { text-align: center; font-size: 14px; color: var(--muted); margin-top: 6px; }
-  .demo-note { font-size: 13px; color: var(--muted); text-align: center; margin: 10px 0 0; }
-  .notice { background: var(--soft); }
+  .buy-note { color: var(--muted); font-size: 14px; margin: 14px 0 0; }
+
+  /* 購買流程 */
+  .steps { list-style: none; counter-reset: s; margin: 0; padding: 0; display: grid; gap: 12px; }
+  .steps li { counter-increment: s; display: flex; gap: 12px; align-items: flex-start; background: var(--soft); border-radius: 16px; padding: 12px 14px; }
+  .steps li::before { content: counter(s); flex: none; width: 30px; height: 30px; line-height: 30px; text-align: center; border-radius: 50%; background: var(--pink); color: #fff; font-weight: bold; }
+  .steps b { display: block; }
+  .steps span { font-size: 15px; color: var(--muted); }
+
+  /* 注意 */
+  .notice { background: var(--yellow); border-color: #ffd36b; box-shadow: 0 6px 0 #ffd36b; }
   .notice h2 { color: #b45309; }
-  .get li::marker { content: "✅ "; }
+  .notice ul { margin: 0; padding-left: 1.2em; }
+  .notice li { margin: 6px 0; }
+
+  /* 常見問題、條款 */
+  details { border-bottom: 2px dashed #f6e6dc; padding: 4px 0; }
+  details:last-of-type { border-bottom: none; }
+  summary { cursor: pointer; font-weight: bold; padding: 10px 28px 10px 0; position: relative; list-style: none; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: "＋"; position: absolute; right: 0; top: 10px; color: var(--pink); }
+  details[open] summary::after { content: "－"; }
+  details p { margin: 0 0 10px; }
+
+  footer { text-align: center; color: var(--muted); font-size: 14px; margin-top: 36px; }
+  footer .bye { font-size: 18px; color: var(--text); }
+
   .sticky-buy {
-    position: fixed; left: 0; right: 0; bottom: 0; background: rgba(255,247,238,.96);
-    border-top: 2px solid var(--line); padding: 10px 16px; display: flex; gap: 12px;
-    align-items: center; justify-content: center;
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: rgba(255,247,238,.97);
+    border-top: 2px solid var(--line); padding: 10px 16px; display: flex; justify-content: center;
   }
-  .sticky-buy .p { font-weight: bold; color: var(--pink); font-size: 20px; }
-  .sticky-buy .buy-btn { margin: 0; padding: 10px 24px; font-size: 17px; }
-  footer { text-align: center; color: var(--muted); font-size: 13px; margin-top: 30px; }
+  .sticky-buy .buy-btn { padding: 10px 26px; font-size: 17px; }
+
   @media (max-width: 640px) {
-    h1 { font-size: 28px; }
-    .shots { grid-template-columns: 1fr; }
-    .shots img { max-width: 360px; margin: 0 auto; }
+    h1 { font-size: 30px; }
+    .features { grid-template-columns: 1fr; }
+    .card { padding: 22px 16px; }
   }
 </style>
 </head>
 <body>
+
+<nav class="nav" aria-label="頁面導覽"><div class="nav-in">
+  <a href="#features">功能</a><a href="#screens">實際畫面</a><a href="#price">價格</a>
+  <a href="#flow">購買流程</a><a href="#notice">購買須知</a><a href="#faq">常見問題</a><a href="#terms">條款政策</a>
+</div></nav>
+
 <div class="wrap">
 
-  <h1>🌼 我的記帳本</h1>
-  <p class="lead">給所有想記帳的人，用了之後，<br>每個人都能知道自己的錢花到哪裡去。</p>
-  <p class="sub">打開手機瀏覽器就能用 · 不用下載 App · 不用註冊</p>
-
-  <section class="card">
-    <h2>可以做什麼</h2>
-    <ul>
-      <li>記收入、支出，看「這個月錢花最多的是哪一類」</li>
-      <li>可以增加記帳者，帳不會混在一起</li>
-      <li>每月預算、存款目標、固定工資、分期付款</li>
-      <li>財務小提醒，自動整理錢花到哪裡、哪裡有變化</li>
-      <li>隱藏金額，不怕旁邊的人看到</li>
-    </ul>
-    <div class="shots">
-      <figure><img src="img/demo-stats.jpg" alt="記帳本的本月統計畫面：支出分類由多到少排列" loading="lazy"><figcaption>支出分類一眼看懂</figcaption></figure>
-      <figure><img src="img/demo-tips.jpg" alt="記帳本的財務小提醒畫面" loading="lazy"><figcaption>財務小提醒</figcaption></figure>
-      <figure><img src="img/demo-list.jpg" alt="記帳本的支出明細畫面" loading="lazy"><figcaption>每一筆都清清楚楚</figcaption></figure>
+  <header class="hero">
+    <span class="brand">🌼 我的記帳本</span>
+    <h1>錢到底花去哪了？</h1>
+    <p class="lead">打開手機就能記帳，不用下載 App、不用註冊。<br>記下每一筆，一眼看出這個月錢花最多的是哪一類。</p>
+    <div class="hero-card" aria-hidden="true">
+      <div class="row"><span>🍱 午餐便當</span><span class="amt">-120</span></div>
+      <div class="row"><span>🚕 計程車</span><span class="amt">-280</span></div>
+      <div class="row"><span>🛒 洗衣精、衛生紙</span><span class="amt">-1,290</span></div>
+      <div class="tip">💡 這個月花最多的是「購物」</div>
     </div>
-    <p class="demo-note">畫面中的名字和金額都是示範用的假資料。</p>
+  </header>
+
+  <section class="card pain">
+    <p class="big">月底一看存款，總是想不起來錢花到哪裡去？</p>
+    <p>想開始記帳，卻總是卡在：</p>
+    <div class="bubbles">
+      <div class="bubble">「記帳 App 功能好多，看了就頭暈」</div>
+      <div class="bubble">「又要下載、又要註冊帳號，好麻煩」</div>
+      <div class="bubble">「記了一堆，還是看不出錢花到哪裡」</div>
+      <div class="bubble">「不想把自己的收支交給別人的伺服器」</div>
+    </div>
+    <p>【我的記帳本】把記帳變得很簡單：打開手機瀏覽器，記下一筆，記帳本就幫你整理好每個月的收支、花最多的分類，還會給你財務小提醒。</p>
+    <p>帳只存在你自己的手機裡，不會上傳到任何地方，連我都看不到。</p>
+    <p class="cta-line">一次買斷 NT$499，從今天開始知道錢花到哪裡去。</p>
   </section>
 
-  <section class="card notice">
-    <h2>⚠️ 你的帳存在哪裡（請先看完再購買）</h2>
+  <section class="card" id="features">
+    <h2><span class="i">✨</span>可以幫你做什麼</h2>
+    <ul class="features">
+      <li><b>📝 記收入、支出</b><span>選分類、現金或信用卡，填金額就記好了</span></li>
+      <li><b>📊 錢花到哪一目了然</b><span>支出分類由多到少排好，看得出哪一類花最多</span></li>
+      <li><b>💡 財務小提醒</b><span>自動整理這個月存了多少、花最多的是哪一類</span></li>
+      <li><b>🎯 預算與存款目標</b><span>每月預算用到 80% 會提醒你，超過會標示「已超支」</span></li>
+      <li><b>💳 固定工資、分期付款</b><span>每月固定收支自動記入，未來幾個月要繳多少分期一眼看到</span></li>
+      <li><b>👨‍👩‍👧 可以增加記帳者</b><span>每位記帳者的帳分開放，不會混在一起</span></li>
+      <li><b>🙈 隱藏金額</b><span>一鍵把金額變成 ****，不怕旁邊的人看到</span></li>
+      <li><b>💾 備份與還原</b><span>每 3 天提醒備份；換手機時匯入備份就能找回來</span></li>
+    </ul>
+  </section>
+
+  <section class="card" id="screens">
+    <h2><span class="i">📱</span>實際畫面長這樣</h2>
+    <p class="note">下面都是記帳本的真實畫面，名字和金額是示範用的假資料。</p>
+    <div class="slider">
+      <div class="track" id="track">
+        <figure class="slide"><div class="frame"><img src="img/s1.jpg" alt="記下一筆支出的表單" loading="lazy"></div><figcaption><span class="n">1</span>記下一筆<small>選分類、付款方式，填金額就好</small></figcaption></figure>
+        <figure class="slide"><div class="frame"><img src="img/s2.jpg" alt="支出明細列表" loading="lazy"></div><figcaption><span class="n">2</span>每一筆都清清楚楚<small>記錯了可以修改，刪除前會再確認</small></figcaption></figure>
+        <figure class="slide"><div class="frame bottom"><img src="img/s3.jpg" alt="本月統計與支出分類" loading="lazy"></div><figcaption><span class="n">3</span>錢花到哪一目了然<small>支出分類由多到少排好</small></figcaption></figure>
+        <figure class="slide"><div class="frame"><img src="img/s4.jpg" alt="財務小提醒" loading="lazy"></div><figcaption><span class="n">4</span>財務小提醒<small>自動整理這個月的變化</small></figcaption></figure>
+        <figure class="slide"><div class="frame"><img src="img/s5.jpg" alt="備份匯出與匯入" loading="lazy"></div><figcaption><span class="n">5</span>備份帶著走<small>換手機時匯入備份就能找回來</small></figcaption></figure>
+      </div>
+      <div class="slider-ctrl"><button type="button" id="prev" aria-label="上一張">‹</button><span>左右滑動看 5 個步驟</span><button type="button" id="next" aria-label="下一張">›</button></div>
+    </div>
+  </section>
+
+  <section class="card price-card" id="price">
+    <h2>💗 價格</h2>
+    <div class="price">NT$499 <small>／一次購買</small></div>
+    <p>沒有訂閱、沒有額外收費</p>
     <ul>
-      <li>帳只存在你自己手機的瀏覽器裡，不會上傳到任何地方，我也看不到你的帳</li>
-      <li>沒有帳號、不用註冊、不收 Email</li>
-      <li>因為不上傳，所以換手機、清除瀏覽器資料，帳會不見。記帳本每 3 天會提醒你備份一次，備份檔要自己存到雲端硬碟或信箱</li>
-      <li>沒有雲端同步，手機和電腦的帳不會自動同步</li>
-      <li>沒有全部記帳者合計的畫面</li>
+      <li>記收入、支出，支出分類一目了然</li>
+      <li>財務小提醒、每月預算、存款目標</li>
+      <li>固定工資、每月固定支出、分期付款自動記入</li>
+      <li>可以增加記帳者、隱藏金額</li>
+      <li>每 3 天備份提醒，換手機也能找回來</li>
     </ul>
-  </section>
-
-  <section class="card">
-    <h2>使用環境</h2>
-    <ul>
-      <li>已在 iPhone（Safari）上完整測試；Android 目前還沒有完整測試</li>
-      <li>打開記帳本時需要網路</li>
-      <li>請用 Safari 或 Chrome 打開，不要在 LINE 裡直接使用（LINE 裡記的帳跟瀏覽器是分開的）</li>
-      <li>金額只能輸入整數（例如 120，不能輸入 120.5）</li>
-      <li>「加入主畫面」還沒有測試過，建議用瀏覽器的書籤打開</li>
-    </ul>
-  </section>
-
-  <section class="card">
-    <h2>購買後你會收到</h2>
-    <ul class="get">
-      <li>記帳本網址</li>
-      <li>使用說明（怎麼開始用、怎麼備份、換手機怎麼把帳找回來）</li>
-    </ul>
-  </section>
-
-  <section class="card price-box" id="buy">
-    <h2>費用</h2>
-    <div class="price">NT$499 <small>買一次</small></div>
-    <p>沒有訂閱、沒有額外收費<br>使用時只會用到你自己的網路流量</p>
-    <a class="buy-btn" href="https://lin.ee/opTSS2X" target="_blank" rel="noopener">立即購買（加官方 LINE）</a>
+    <a class="buy-btn" href="https://lin.ee/opTSS2X" target="_blank" rel="noopener">立即購買 →</a>
     <p class="buy-note">按下去會加入官方 LINE，私訊「我要購買」就可以了。</p>
   </section>
 
-  <footer>我的記帳本 · 本機儲存 · 僅在此裝置此瀏覽器有效 · 可匯出備份</footer>
+  <section class="card" id="flow">
+    <h2><span class="i">🛍️</span>購買流程</h2>
+    <ol class="steps">
+      <li><div><b>點「立即購買」加官方 LINE</b><span>私訊「我要購買」</span></div></li>
+      <li><div><b>依照 LINE 裡的說明付款</b><span>付款方式會在 LINE 告訴你</span></div></li>
+      <li><div><b>收到記帳本網址和使用說明</b><span>核對付款後，在 LINE 傳給你</span></div></li>
+    </ol>
+  </section>
+
+  <section class="card notice" id="notice">
+    <h2>⚠️ 購買前請先注意</h2>
+    <ul>
+      <li>帳只存在你自己手機的瀏覽器裡，不會上傳到任何地方，我也看不到你的帳。</li>
+      <li>因為不上傳，所以換手機、清除瀏覽器資料，帳會不見。記帳本每 3 天會提醒你備份一次，備份檔要自己存到雲端硬碟或信箱。</li>
+      <li>沒有雲端同步，手機和電腦的帳不會自動同步。</li>
+      <li>沒有全部記帳者合計的畫面。</li>
+      <li>已在 iPhone（Safari）上完整測試；Android 目前還沒有完整測試。</li>
+      <li>需要網路才能打開。</li>
+      <li>請用 Safari 或 Chrome 打開，不要在 LINE 裡直接使用（LINE 裡記的帳跟瀏覽器是分開的）。</li>
+      <li>金額只能輸入整數（例如 120，不能輸入 120.5）。</li>
+      <li>「加入主畫面」還沒有測試過，建議用瀏覽器的書籤打開。</li>
+    </ul>
+  </section>
+
+  <section class="card" id="faq">
+    <h2><span class="i">💬</span>常見問題</h2>
+    <p class="note">點選問題，就會看到回答。</p>
+    <details><summary>需要下載 App 嗎？手機、電腦都能用嗎？</summary>
+      <p>不用下載 App，也不用註冊帳號。收到網址後，用手機或電腦的瀏覽器打開就能使用，建議用 Safari 或 Chrome。</p>
+      <p>手機和電腦的帳是分開的，不會自動同步。</p></details>
+    <details><summary>帳會存在哪裡？你看得到我的帳嗎？</summary>
+      <p>帳只存在你自己那台裝置的瀏覽器裡，不會上傳到任何地方，我看不到，也不會保存。</p></details>
+    <details><summary>換手機的話，帳會不見嗎？</summary>
+      <p>直接換的話會不見。換手機前，先到「管理」頁按「匯出備份」，把檔案存到雲端硬碟或寄到自己信箱；在新手機打開記帳本 →「管理」→「匯入備份」就能找回來。</p></details>
+    <details><summary>在 LINE 裡點開可以用嗎？</summary>
+      <p>建議不要。LINE 裡記的帳跟 Safari／Chrome 是分開的，換來換去帳會被拆成兩半。在 LINE 裡打開時，記帳本會跳出提醒，請選「用其他瀏覽器開啟」。</p>
+      <p>如果已經在 LINE 裡記了帳，可以在「管理」頁按「複製備份文字」，再到瀏覽器的「管理」頁按「貼上備份文字」搬過去。</p></details>
+    <details><summary>一家人可以一起用嗎？</summary>
+      <p>可以增加記帳者，每位記帳者的帳分開放。不過帳只存在這一台裝置裡，如果每個人用自己的手機，每支手機上會是各自獨立的記帳本。</p></details>
+    <details><summary>可以分享給朋友嗎？</summary>
+      <p>記帳本網址僅供購買者本人使用，請不要轉傳。</p></details>
+    <details><summary>Android 手機可以用嗎？</summary>
+      <p>目前只在 iPhone（Safari）上完整測試過，Android 還沒有完整測試，可能會有沒發現的問題。</p></details>
+  </section>
+
+  <section class="card" id="terms">
+    <h2><span class="i">📄</span>服務條款與相關政策</h2>
+    <p class="note">點選每個項目，就會展開詳細內容。</p>
+    <details><summary>服務條款</summary>
+      <p>「我的記帳本」為 NT$499 一次購買的線上數位工具。付款完成後，會在官方 LINE 提供記帳本網址與使用說明。</p>
+      <p>本商品不包含：雲端同步、一對一客製功能、理財建議。記帳本裡的「財務小提醒」是依照你記下的數字用固定規則計算出來的，不是 AI 分析，也不是專業理財建議。</p>
+      <p>記帳本網址僅供購買者本人使用，請勿轉售、公開散布，或用來製作相似的商品。</p></details>
+    <details><summary>退款說明</summary>
+      <p>（待確認）</p></details>
+    <details><summary>隱私權政策</summary>
+      <p>記帳本本身不會收集你的姓名、電話等個人資料；你記的帳只存在你自己的裝置裡，我們看不到，也不會保存。</p>
+      <p>購買時你在官方 LINE 提供的資料，只用於核對訂單、交付商品與客服聯繫，核對完成後即刪除，不會轉售或提供給第三方。</p></details>
+    <details><summary>客服聯絡資訊</summary>
+      <p>官方 LINE 負責購買、網址領取與訂單問題：<a href="https://lin.ee/opTSS2X" target="_blank" rel="noopener">https://lin.ee/opTSS2X</a></p></details>
+  </section>
+
+  <footer>
+    <p class="bye">從今天開始，知道錢花到哪裡去 🌼</p>
+    <p>有任何問題，歡迎加官方 LINE 詢問<br><a href="https://lin.ee/opTSS2X" target="_blank" rel="noopener">https://lin.ee/opTSS2X</a></p>
+    <p>© 我的記帳本</p>
+  </footer>
 </div>
 
-<div class="sticky-buy">
-  <span class="p">NT$499</span>
-  <a class="buy-btn" href="https://lin.ee/opTSS2X" target="_blank" rel="noopener">立即購買</a>
-</div>
+<div class="sticky-buy"><a class="buy-btn" href="https://lin.ee/opTSS2X" target="_blank" rel="noopener">NT$499・立即購買 →</a></div>
+
+<script>
+  (function () {
+    var t = document.getElementById("track");
+    function go(d) { var s = t.querySelector(".slide"); t.scrollBy({ left: d * (s.offsetWidth + 14), behavior: "smooth" }); }
+    document.getElementById("prev").addEventListener("click", function () { go(-1); });
+    document.getElementById("next").addEventListener("click", function () { go(1); });
+  })();
+</script>
 </body>
 </html>
