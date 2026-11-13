@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>我的記帳本｜知道錢花到哪裡去</title>
+<meta name="description" content="給所有想記帳的人。記收入、支出，一眼看出這個月錢花最多的是哪一類。帳只存在你自己的手機裡。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fff7ee; --card: #ffffff; --line: #ffe3d3; --text: #5a4a42; --muted: #8a7a72;
+    --pink: #e85a7a; --pink-dark: #c4405f; --green: #2f9a66; --soft: #fff1e6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: "Huninn", "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+    font-size: 17px; line-height: 1.75;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 16px 120px; }
+  .card {
+    background: var(--card); border: 2px solid var(--line); box-shadow: 0 6px 0 var(--line);
+    border-radius: 22px; padding: 22px 20px; margin: 22px 0;
+  }
+  h1 { color: var(--pink); font-size: 34px; line-height: 1.3; margin: 34px 0 6px; text-align: center; }
+  h2 { font-size: 22px; margin: 0 0 12px; }
+  .lead { text-align: center; font-size: 19px; margin: 0 0 6px; }
+  .sub { text-align: center; color: var(--muted); font-size: 15px; margin: 0; }
+  ul { margin: 0; padding-left: 1.2em; }
+  li { margin: 4px 0; }
+  .price-box { text-align: center; }
+  .price { font-size: 44px; font-weight: bold; color: var(--pink); line-height: 1.2; }
+  .price small { font-size: 18px; color: var(--muted); font-weight: normal; }
+  .buy-btn {
+    display: inline-block; margin-top: 14px; padding: 14px 34px; border-radius: 999px;
+    background: var(--pink); color: #fff; font-size: 20px; font-weight: bold; text-decoration: none;
+    box-shadow: 0 5px 0 var(--pink-dark);
+  }
+  .buy-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--pink-dark); }
+  .buy-note { color: var(--muted); font-size: 14px; margin: 12px 0 0; }
+  .shots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 8px; }
+  .shots figure { margin: 0; }
+  .shots img { width: 100%; height: auto; border-radius: 14px; border: 2px solid var(--line); display: block; }
+  .shots figcaption { text-align: center; font-size: 14px; color: var(--muted); margin-top: 6px; }
+  .demo-note { font-size: 13px; color: var(--muted); text-align: center; margin: 10px 0 0; }
+  .notice { background: var(--soft); }
+  .notice h2 { color: #b45309; }
+  .get li::marker { content: "✅ "; }
+  .sticky-buy {
+    position: fixed; left: 0; right: 0; bottom: 0; background: rgba(255,247,238,.96);
+    border-top: 2px solid var(--line); padding: 10px 16px; display: flex; gap: 12px;
+    align-items: center; justify-content: center;
+  }
+  .sticky-buy .p { font-weight: bold; color: var(--pink); font-size: 20px; }
+  .sticky-buy .buy-btn { margin: 0; padding: 10px 24px; font-size: 17px; }
+  footer { text-align: center; color: var(--muted); font-size: 13px; margin-top: 30px; }
+  @media (max-width: 640px) {
+    h1 { font-size: 28px; }
+    .shots { grid-template-columns: 1fr; }
+    .shots img { max-width: 360px; margin: 0 auto; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>🌼 我的記帳本</h1>
+  <p class="lead">給所有想記帳的人，用了之後，<br>每個人都能知道自己的錢花到哪裡去。</p>
+  <p class="sub">打開手機瀏覽器就能用 · 不用下載 App · 不用註冊</p>
+
+  <section class="card">
+    <h2>可以做什麼</h2>
+    <ul>
+      <li>記收入、支出，看「這個月錢花最多的是哪一類」</li>
+      <li>可以增加記帳者，帳不會混在一起</li>
+      <li>每月預算、存款目標、固定工資、分期付款</li>
+      <li>財務小提醒，自動整理錢花到哪裡、哪裡有變化</li>
+      <li>隱藏金額，不怕旁邊的人看到</li>
+    </ul>
+    <div class="shots">
+      <figure><img src="img/demo-stats.jpg" alt="記帳本的本月統計畫面：支出分類由多到少排列" loading="lazy"><figcaption>支出分類一眼看懂</figcaption></figure>
+      <figure><img src="img/demo-tips.jpg" alt="記帳本的財務小提醒畫面" loading="lazy"><figcaption>財務小提醒</figcaption></figure>
+      <figure><img src="img/demo-list.jpg" alt="記帳本的支出明細畫面" loading="lazy"><figcaption>每一筆都清清楚楚</figcaption></figure>
+    </div>
+    <p class="demo-note">畫面中的名字和金額都是示範用的假資料。</p>
+  </section>
+
+  <section class="card notice">
+    <h2>⚠️ 你的帳存在哪裡（請先看完再購買）</h2>
+    <ul>
+      <li>帳只存在你自己手機的瀏覽器裡，不會上傳到任何地方，我也看不到你的帳</li>
+      <li>沒有帳號、不用註冊、不收 Email</li>
+      <li>因為不上傳，所以換手機、清除瀏覽器資料，帳會不見。記帳本每 3 天會提醒你備份一次，備份檔要自己存到雲端硬碟或信箱</li>
+      <li>沒有雲端同步，手機和電腦的帳不會自動同步</li>
+      <li>沒有全部記帳者合計的畫面</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>使用環境</h2>
+    <ul>
+      <li>已在 iPhone（Safari）上完整測試；Android 目前還沒有完整測試</li>
+      <li>打開記帳本時需要網路</li>
+      <li>請用 Safari 或 Chrome 打開，不要在 LINE 裡直接使用（LINE 裡記的帳跟瀏覽器是分開的）</li>
+      <li>金額只能輸入整數（例如 120，不能輸入 120.5）</li>
+      <li>「加入主畫面」還沒有測試過，建議用瀏覽器的書籤打開</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>購買後你會收到</h2>
+    <ul class="get">
+      <li>記帳本網址</li>
+      <li>使用說明（怎麼開始用、怎麼備份、換手機怎麼把帳找回來）</li>
+    </ul>
+  </section>
+
+  <section class="card price-box" id="buy">
+    <h2>費用</h2>
+    <div class="price">NT$499 <small>買一次</small></div>
+    <p>沒有訂閱、沒有額外收費<br>使用時只會用到你自己的網路流量</p>
+    <a class="buy-btn" href="https://lin.ee/opTSS2X" target="_blank" rel="noopener">立即購買（加官方 LINE）</a>
+    <p class="buy-note">按下去會加入官方 LINE，私訊「我要購買」就可以了。</p>
+  </section>
+
+  <footer>我的記帳本 · 本機儲存 · 僅在此裝置此瀏覽器有效 · 可匯出備份</footer>
+</div>
+
+<div class="sticky-buy">
+  <span class="p">NT$499</span>
+  <a class="buy-btn" href="https://lin.ee/opTSS2X" target="_blank" rel="noopener">立即購買</a>
+</div>
+</body>
+</html>
