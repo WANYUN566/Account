@@ -96,14 +96,33 @@
   .slider { position: relative; }
   .track { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 4px 2px 10px; -webkit-overflow-scrolling: touch; }
   .slide { flex: 0 0 82%; max-width: 320px; scroll-snap-align: center; margin: 0; }
-  .slide .frame { height: 420px; overflow: hidden; overflow: clip; border-radius: 16px; border: 2px solid var(--line); background: #f8f4ff; }
+  .slide .frame {
+    height: 420px; overflow: hidden; overflow: clip; border-radius: 16px; border: 2px solid var(--line);
+    background: #fff7ee; display: flex; flex-direction: column; justify-content: center; padding: 10px;
+  }
+  .slide .frame img { border-radius: 12px; }
   .slide img { width: 100%; height: auto; display: block; }
-  .slide .frame.bottom { display: flex; flex-direction: column; justify-content: flex-end; }
+  .slide .frame.bottom { justify-content: flex-end; padding-bottom: 0; }
+  .slide .frame.bottom img { border-radius: 12px 12px 0 0; }
   .slide figcaption { margin-top: 8px; font-size: 15px; }
   .slide figcaption .n { display: inline-block; width: 24px; height: 24px; line-height: 24px; text-align: center; border-radius: 50%; background: var(--pink); color: #fff; font-size: 14px; margin-right: 6px; }
   .slide figcaption small { display: block; color: var(--muted); font-size: 14px; }
   .slider-ctrl { display: flex; justify-content: center; align-items: center; gap: 14px; margin-top: 6px; color: var(--muted); font-size: 14px; }
   .slider-ctrl button { width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--line); background: #fff; font-size: 20px; color: var(--text); cursor: pointer; font-family: inherit; }
+
+  /* 小圖示動起來（輕輕的，不搶眼） */
+  @keyframes floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+  @keyframes wiggle { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-10deg); } 75% { transform: rotate(10deg); } }
+  @keyframes pop { 0% { transform: scale(1); } 40% { transform: scale(1.25); } 100% { transform: scale(1); } }
+  h2 .ic { animation: floaty 3.2s ease-in-out infinite; }
+  .card:nth-of-type(odd) h2 .ic { animation-delay: -1.6s; }
+  .hero-card .tip .ic { animation: floaty 2.6s ease-in-out infinite; }
+  .nav a.on .e { animation: wiggle .6s ease-in-out; }
+  .features li:hover b .ic, .features li:active b .ic { animation: pop .45s ease-out; }
+  .features li { cursor: default; }
+  @media (prefers-reduced-motion: reduce) {
+    h2 .ic, .hero-card .tip .ic, .nav a.on .e, .features li:hover b .ic, .features li:active b .ic { animation: none; }
+  }
 
   /* 價格 */
   .price-card { text-align: center; background: linear-gradient(#fff, #f6f1ff); }
