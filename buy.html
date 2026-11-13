@@ -62,8 +62,17 @@
 
   /* 痛點 */
   .pain .big { font-size: 20px; font-weight: bold; margin: 0 0 10px; }
-  .bubbles { display: grid; gap: 8px; margin: 12px 0 16px; }
-  .bubble { background: var(--soft); border-radius: 16px; padding: 8px 14px; width: fit-content; max-width: 100%; }
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0 16px; }
+  .compare .col { border-radius: 16px; padding: 12px 14px; }
+  .compare .before { background: #f3eeea; }
+  .compare .after { background: var(--pink-soft); }
+  .compare h3 { font-size: 17px; margin: 0 0 6px; }
+  .compare ul { list-style: none; margin: 0; padding: 0; }
+  .compare li { padding: 5px 0; font-size: 15px; border-bottom: 2px dashed rgba(0,0,0,.06); }
+  .compare li:last-child { border-bottom: none; }
+  .compare .before li::before { content: "✗ "; color: #a08c82; }
+  .compare .after li::before { content: "✓ "; color: var(--pink-dark); font-weight: bold; }
+  @media (max-width: 640px) { .compare { grid-template-columns: 1fr; } }
   .pain p { margin: 0 0 10px; }
   .pain .cta-line { color: var(--pink-dark); font-weight: bold; text-align: center; margin-top: 16px; }
 
@@ -146,7 +155,7 @@
 <div class="wrap">
 
   <header class="hero">
-    <span class="brand">🌼 我的記帳本</span>
+    <span class="brand">☁️ Yun端 出品</span>
     <h1>錢到底花去哪了？</h1>
     <p class="lead">打開手機就能記帳，不用下載 App、不用註冊。<br>記下每一筆，一眼看出這個月錢花最多的是哪一類。</p>
     <div class="hero-card" aria-hidden="true">
@@ -159,12 +168,25 @@
 
   <section class="card pain">
     <p class="big">月底一看存款，總是想不起來錢花到哪裡去？</p>
-    <p>想開始記帳，卻總是卡在：</p>
-    <div class="bubbles">
-      <div class="bubble">「記帳 App 功能好多，看了就頭暈」</div>
-      <div class="bubble">「又要下載、又要註冊帳號，好麻煩」</div>
-      <div class="bubble">「記了一堆，還是看不出錢花到哪裡」</div>
-      <div class="bubble">「不想把自己的收支交給別人的伺服器」</div>
+    <div class="compare">
+      <div class="col before">
+        <h3>以前想記帳</h3>
+        <ul>
+          <li>要先下載 App、註冊帳號</li>
+          <li>功能太多，不知道從哪開始</li>
+          <li>記了一堆，還是看不出錢花到哪</li>
+          <li>收支要交給別人的伺服器保管</li>
+        </ul>
+      </div>
+      <div class="col after">
+        <h3>用我的記帳本</h3>
+        <ul>
+          <li>打開瀏覽器就能記，不用註冊</li>
+          <li>選分類、填金額，一筆就記好</li>
+          <li>支出分類由多到少，一眼看懂</li>
+          <li>帳只存在自己手機，連我都看不到</li>
+        </ul>
+      </div>
     </div>
     <p>【我的記帳本】把記帳變得很簡單：打開手機瀏覽器，記下一筆，記帳本就幫你整理好每個月的收支、花最多的分類，還會給你財務小提醒。</p>
     <p>帳只存在你自己的手機裡，不會上傳到任何地方，連我都看不到。</p>
@@ -220,7 +242,7 @@
     <ol class="steps">
       <li><div><b>點「立即購買」加官方 LINE</b><span>私訊「我要購買」</span></div></li>
       <li><div><b>依照 LINE 裡的說明付款</b><span>付款方式會在 LINE 告訴你</span></div></li>
-      <li><div><b>收到記帳本網址和使用說明</b><span>核對付款後，在 LINE 傳給你</span></div></li>
+      <li><div><b>收到記帳本網址和使用說明</b><span>核對付款後，24 小時內在 LINE 傳給你</span></div></li>
     </ol>
   </section>
 
@@ -256,6 +278,8 @@
       <p>可以增加記帳者，每位記帳者的帳分開放。不過帳只存在這一台裝置裡，如果每個人用自己的手機，每支手機上會是各自獨立的記帳本。</p></details>
     <details><summary>可以分享給朋友嗎？</summary>
       <p>記帳本網址僅供購買者本人使用，請不要轉傳。</p></details>
+    <details><summary>付款後多久會拿到網址？</summary>
+      <p>付款完成後，請在官方 LINE 告訴我，核對後會在 24 小時內傳記帳本網址和使用說明給你。</p></details>
     <details><summary>Android 手機可以用嗎？</summary>
       <p>目前只在 iPhone（Safari）上完整測試過，Android 還沒有完整測試，可能會有沒發現的問題。</p></details>
   </section>
@@ -268,18 +292,20 @@
       <p>本商品不包含：雲端同步、一對一客製功能、理財建議。記帳本裡的「財務小提醒」是依照你記下的數字用固定規則計算出來的，不是 AI 分析，也不是專業理財建議。</p>
       <p>記帳本網址僅供購買者本人使用，請勿轉售、公開散布，或用來製作相似的商品。</p></details>
     <details><summary>退款說明</summary>
-      <p>（待確認）</p></details>
+      <p>本商品為線上數位商品，付款後即提供使用。</p>
+      <p>點選「立即購買」並完成付款，即視為你已閱讀並同意本說明及購買；交易完成後，恕不接受退款或取消訂單。</p>
+      <p>購買前請先看過本頁的「可以幫你做什麼」與「購買前請先注意」，確認符合你的需求再購買。</p></details>
     <details><summary>隱私權政策</summary>
       <p>記帳本本身不會收集你的姓名、電話等個人資料；你記的帳只存在你自己的裝置裡，我們看不到，也不會保存。</p>
       <p>購買時你在官方 LINE 提供的資料，只用於核對訂單、交付商品與客服聯繫，核對完成後即刪除，不會轉售或提供給第三方。</p></details>
     <details><summary>客服聯絡資訊</summary>
-      <p>官方 LINE 負責購買、網址領取與訂單問題：<a href="https://lin.ee/opTSS2X" target="_blank" rel="noopener">https://lin.ee/opTSS2X</a></p></details>
+      <p>官方 LINE 負責購買、網址領取與訂單問題，並非即時客服，會在 24 小時內回覆，請耐心等候：<a href="https://lin.ee/opTSS2X" target="_blank" rel="noopener">https://lin.ee/opTSS2X</a></p></details>
   </section>
 
   <footer>
     <p class="bye">從今天開始，知道錢花到哪裡去 🌼</p>
     <p>有任何問題，歡迎加官方 LINE 詢問<br><a href="https://lin.ee/opTSS2X" target="_blank" rel="noopener">https://lin.ee/opTSS2X</a></p>
-    <p>© 我的記帳本</p>
+    <p>賣家：Yun端　© Yun端</p>
   </footer>
 </div>
 
