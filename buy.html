@@ -118,10 +118,10 @@
   .card:nth-of-type(odd) h2 .ic { animation-delay: -1.6s; }
   .hero-card .tip .ic { animation: floaty 2.6s ease-in-out infinite; }
   .nav a.on .e { animation: wiggle .6s ease-in-out; }
-  .features li:hover b .ic, .features li:active b .ic { animation: pop .45s ease-out; }
-  .features li { cursor: default; }
+  .features li:hover b .ic, .features li.pop b .ic { animation: pop .45s ease-out; }
+  .features li { cursor: pointer; -webkit-tap-highlight-color: transparent; }
   @media (prefers-reduced-motion: reduce) {
-    h2 .ic, .hero-card .tip .ic, .nav a.on .e, .features li:hover b .ic, .features li:active b .ic { animation: none; }
+    h2 .ic, .hero-card .tip .ic, .nav a.on .e, .features li:hover b .ic, .features li.pop b .ic { animation: none; }
   }
 
   /* 價格 */
@@ -355,6 +355,13 @@
       if (cur && cur.scrollIntoView) { var nav = cur.parentNode.parentNode; var x = cur.offsetLeft - 12; if (Math.abs(nav.scrollLeft - x) > 40) nav.scrollLeft = x; }
     }
     window.addEventListener("scroll", mark, { passive: true }); mark();
+    // 點功能清單的某一格，那格的小圖示彈一下（iPhone 也有效）
+    Array.prototype.forEach.call(document.querySelectorAll(".features li"), function (li) {
+      li.addEventListener("click", function () {
+        li.classList.remove("pop"); void li.offsetWidth; li.classList.add("pop");
+      });
+      li.addEventListener("animationend", function () { li.classList.remove("pop"); });
+    });
   })();
 </script>
 </body>
