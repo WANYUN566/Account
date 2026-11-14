@@ -222,6 +222,42 @@
   .tips .ti svg { width: 30px; height: 30px; display: block; }
   .tips .tt b { font-weight: bold; }
   .tips-note { font-size: 12px; color: #a08c82; margin: 10px 0 0; }
+  /* ===== 年度報表 ===== */
+  .year-list { list-style: none; margin: 0; padding: 0; }
+  .year-list li { padding: 12px 0; border-bottom: 2px dashed #f6e6dc; }
+  .year-list li:last-child { border-bottom: none; }
+  .year-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .year-head .yn { font-size: 17px; font-weight: bold; }
+  .year-head .yn small { font-weight: normal; color: #a08c82; font-size: 14px; margin-left: 4px; }
+  .year-head .yt { font-size: 22px; font-weight: bold; color: #e0505f; white-space: nowrap; }
+  .year-sub { font-size: 14px; color: #8a7a72; margin-top: 2px; }
+  .year-sub .up { color: #e0505f; font-weight: bold; }
+  .year-sub .down { color: #2f9a66; font-weight: bold; }
+  .year-none { color: #a08c82; font-size: 15px; }
+  .year-fold { margin-top: 14px; }
+  .year-fold > summary {
+    list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+    background: #fff6ee; border-radius: 14px; padding: 10px 14px; font-size: 15px;
+  }
+  .year-fold > summary::-webkit-details-marker { display: none; }
+  .year-fold .when-open, .year-fold[open] .when-closed { display: none; }
+  .year-fold[open] .when-open { display: inline; }
+  .year-fold .fold-hint { color: #b0566b; font-size: 14px; white-space: nowrap; }
+  .year-chart { margin-top: 12px; }
+  .year-chart svg { width: 100%; height: auto; display: block; }
+  .year-chart .bar { fill: #f6c1cc; }
+  .year-chart .bar.now { fill: #e85a7a; }
+  .year-chart text { font-family: inherit; fill: #6b5048; }
+  .year-chart .val { font-size: 13px; font-weight: bold; }
+  .year-chart .lab { font-size: 14px; }
+  .year-chart .base { stroke: #e9d6c9; stroke-width: 2; }
+  body.theme-teddy .year-chart .bar { fill: #ead3bd; } body.theme-teddy .year-chart .bar.now { fill: #b0683a; }
+  body.theme-leaf .year-chart .bar { fill: #c6e4d8; } body.theme-leaf .year-chart .bar.now { fill: #2b8a7e; }
+  body.theme-vehicle .year-chart .bar { fill: #c9dbf3; } body.theme-vehicle .year-chart .bar.now { fill: #2f6fd0; }
+  body.theme-bow .year-chart .bar { fill: #e2d6f5; } body.theme-bow .year-chart .bar.now { fill: #9b7fd4; }
+  body.theme-bow .year-fold > summary { background: #f3eefc; } body.theme-bow .year-fold .fold-hint { color: #7a5fb5; }
+  body[class*="theme-"] .year-list li { border-bottom-color: rgba(0,0,0,.07); }
+
 
   /* 預算與存款目標 */
   .budget-alert { border-radius: 16px; padding: 12px 16px; margin-bottom: 18px; font-size: 15px; line-height: 1.7; border: 2px solid #f2c94c; background: #fff7d6; color: #6b4a00; }
@@ -778,6 +814,16 @@
           <p class="list-note">根據你的記帳紀錄自動整理，看看錢花到哪裡、哪裡有變化。</p>
           <ul class="tips" id="tipsList"></ul>
           <p class="tips-note">這些提醒是依照你記下的數字，用固定規則計算出來的，不是 AI 分析，也不是專業理財建議。</p>
+        </div>
+
+        <div class="card" id="yearCard">
+          <h2><span class="icon" aria-hidden="true"><svg viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'><rect x='8' y='11' width='32' height='29' rx='6' fill='#fff' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><path d='M8 20 V17 a6 6 0 0 1 6 -6 H34 a6 6 0 0 1 6 6 V20 Z' fill='#ff9fb3' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><path d='M17 8 V14 M31 8 V14' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><circle cx='19.0' cy='30' r='1.9' fill='#6b5048'/><circle cx='29.0' cy='30' r='1.9' fill='#6b5048'/><circle cx='19.6' cy='29.3' r='0.6' fill='#fff'/><circle cx='29.6' cy='29.3' r='0.6' fill='#fff'/><ellipse cx='15.5' cy='33.0' rx='2.4' ry='1.5' fill='#ff8fa3' opacity='.6'/><ellipse cx='32.5' cy='33.0' rx='2.4' ry='1.5' fill='#ff8fa3' opacity='.6'/><path d='M21.8 32.6 q2.2 2.4 4.4 0' stroke='#6b5048' stroke-width='1.5' fill='none' stroke-linecap='round'/></svg></span> 年度報表</h2>
+          <p class="list-note" id="yearNote">每一年都算到同一天，同一段時間比較。</p>
+          <ul class="year-list" id="yearList"></ul>
+          <details class="year-fold" id="yearFold">
+            <summary><span>📊 三年支出長條圖</span><span class="fold-hint"><span class="when-closed">點開看圖 ▾</span><span class="when-open">收起來 ▴</span></span></summary>
+            <div class="year-chart" id="yearChart" role="img" aria-label="今年、去年、前年同期支出長條圖"></div>
+          </details>
         </div>
       </section>
 
@@ -1416,6 +1462,7 @@
     renderBudget(); renderGoal(); renderTips();
     renderMonthBar(); relabelMonth(); renderFuture();
     checkBackupReminder();
+    renderYearReport();
     if (typeof fitSoon === "function") fitSoon();
     drawCharts();
     renderTrash(); renderPersonTrash();
@@ -3255,6 +3302,75 @@
   document.addEventListener("click", fitSoon);
   window.addEventListener("resize", fitSoon);
   document.querySelectorAll(".stat-fold").forEach(function (d) { d.addEventListener("toggle", fitSoon); });
+
+  // ===== 年度報表：今年、去年、前年，都算 1/1 到「今天這個日期」 =====
+  function renderYearReport() {
+    var list = $("yearList"), chart = $("yearChart");
+    if (!list) return;
+    var today = todayString(), md = today.slice(5), y0 = parseInt(today.slice(0, 4), 10);
+    $("yearNote").textContent = "每一年都算 1/1～" + parseInt(md.slice(0, 2), 10) + "/" + parseInt(md.slice(3), 10) + "，同一段時間比較。";
+    var years = [y0, y0 - 1, y0 - 2], names = ["今年", "去年", "前年"];
+    var data = years.map(function (y) {
+      var from = y + "-01-01", to = y + "-" + md, total = 0, cats = {}, n = 0;
+      records.forEach(function (r) {
+        if (r.type === "income") return;
+        var d = String(r.date);
+        if (d < from || d > to) return;
+        total += r.amount; n++; cats[r.category] = (cats[r.category] || 0) + r.amount;
+      });
+      var top = null;
+      Object.keys(cats).forEach(function (c) { if (!top || cats[c] > cats[top]) top = c; });
+      return { year: y, total: total, count: n, top: top, topAmt: top ? cats[top] : 0 };
+    });
+    list.innerHTML = "";
+    data.forEach(function (d, i) {
+      var li = document.createElement("li");
+      var head = document.createElement("div"); head.className = "year-head";
+      var yn = document.createElement("span"); yn.className = "yn"; yn.textContent = d.year;
+      var sm = document.createElement("small"); sm.textContent = names[i]; yn.appendChild(sm);
+      head.appendChild(yn);
+      if (!d.count) {
+        var none = document.createElement("span"); none.className = "year-none"; none.textContent = "還沒有紀錄";
+        head.appendChild(none); li.appendChild(head); list.appendChild(li); return;
+      }
+      var yt = document.createElement("span"); yt.className = "yt"; yt.textContent = formatMoney(d.total) + " 元";
+      head.appendChild(yt); li.appendChild(head);
+      var prev = data[i + 1];
+      if (prev && prev.count) {
+        var diff = Math.round((d.total - prev.total) * 100) / 100;
+        var sub = document.createElement("div"); sub.className = "year-sub";
+        if (diff === 0) sub.textContent = "跟" + names[i + 1] + "同期一樣";
+        else {
+          var pct = prev.total > 0 ? Math.round(Math.abs(diff) / prev.total * 100) : 0;
+          sub.appendChild(document.createTextNode("比" + names[i + 1] + "同期 "));
+          var b = document.createElement("span"); b.className = diff > 0 ? "up" : "down";
+          b.textContent = (diff > 0 ? "多 " : "少 ") + formatMoney(Math.abs(diff)) + " 元" + (privacyOn ? "" : (diff > 0 ? " ↑" : " ↓") + pct + "%");
+          sub.appendChild(b);
+        }
+        li.appendChild(sub);
+      }
+      var tp = document.createElement("div"); tp.className = "year-sub";
+      tp.textContent = "花最多：" + d.top + " " + formatMoney(d.topAmt) + " 元";
+      li.appendChild(tp);
+      list.appendChild(li);
+    });
+    // 三年長條圖（由左到右：前年、去年、今年）
+    var order = data.slice().reverse(), max = 0;
+    order.forEach(function (d) { if (d.total > max) max = d.total; });
+    var W = 320, H = 200, top = 26, base = 160, bw = 56, gap = (W - bw * 3) / 4;
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">';
+    order.forEach(function (d, i) {
+      var x = gap + i * (bw + gap), h = max > 0 ? Math.max(d.total > 0 ? 3 : 0, (base - top) * d.total / max) : 0;
+      var isNow = d.year === y0;
+      svg += '<rect class="bar' + (isNow ? ' now' : '') + '" x="' + x + '" y="' + (base - h) + '" width="' + bw + '" height="' + h + '" rx="8"/>';
+      var label = d.count ? (privacyOn ? "****" : shortMoney(d.total)) : "無紀錄";
+      svg += '<text class="val" x="' + (x + bw / 2) + '" y="' + (base - h - 8) + '" text-anchor="middle">' + label + '</text>';
+      svg += '<text class="lab" x="' + (x + bw / 2) + '" y="' + (base + 22) + '" text-anchor="middle">' + d.year + '</text>';
+      svg += '<text class="lab" x="' + (x + bw / 2) + '" y="' + (base + 38) + '" text-anchor="middle" style="font-size:12px;fill:#a08c82">' + ["前年", "去年", "今年"][i] + '</text>';
+    });
+    svg += '<line class="base" x1="8" x2="' + (W - 8) + '" y1="' + base + '" y2="' + base + '"/></svg>';
+    chart.innerHTML = svg;
+  }
 
   // ===== 備份提醒 =====
   // 從上次備份算起滿 3 天提醒；從沒備份過的，從第一次看到有帳的時候算 3 天。
