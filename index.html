@@ -240,6 +240,24 @@
   .tips .ti svg { width: 30px; height: 30px; display: block; }
   .tips .tt b { font-weight: bold; }
   .tips-note { font-size: 12px; color: #a08c82; margin: 10px 0 0; }
+  /* ===== 快速記帳（語音或打字） ===== */
+  .quick-box { background: #fff6ee; border-radius: 16px; padding: 12px 14px; margin: 4px 0 16px; }
+  .quick-box label { display: block; font-weight: bold; font-size: 15px; margin-bottom: 6px; }
+  .quick-box input {
+    width: 100%; box-sizing: border-box; padding: 10px 14px; font-size: 16px; font-family: inherit; color: #5a4a42;
+    border: 2px solid #f3ddd0; border-radius: 14px; background: #fff;
+  }
+  .quick-box input:focus { outline: none; border-color: #ffa8b8; box-shadow: 0 0 0 4px #ffe4ea; }
+  .quick-tip { font-size: 13px; color: #a08c82; margin: 6px 0 0; }
+  .quick-msg { font-size: 14px; margin: 8px 0 0; line-height: 1.6; }
+  .quick-msg.ok { color: #2f9a66; } .quick-msg.warn { color: #b45309; }
+  .card.is-editing .quick-box { display: none; }
+  @keyframes quickflash { 0% { box-shadow: 0 0 0 0 rgba(255,168,184,.9); } 100% { box-shadow: 0 0 0 10px rgba(255,168,184,0); } }
+  .quick-filled { animation: quickflash .9s ease-out 1; }
+  body.theme-teddy .quick-box { background: #fbf1e6; } body.theme-leaf .quick-box { background: #eaf7f1; }
+  body.theme-vehicle .quick-box { background: #eaf2fd; } body.theme-bow .quick-box { background: #f3eefc; }
+  body.theme-bow .quick-box input { border-color: #e2d6f5; } body.theme-bow .quick-box input:focus { border-color: #c4b0ea; box-shadow: 0 0 0 4px #f1ebfc; }
+  @media (prefers-reduced-motion: reduce) { .quick-filled { animation: none; } }
   /* ===== 年度報表 ===== */
   .year-list { list-style: none; margin: 0; padding: 0; }
   .year-list li { padding: 12px 0; border-bottom: 2px dashed #f6e6dc; }
@@ -961,6 +979,12 @@
         <div class="card">
           <h2><span class="icon" aria-hidden="true"><svg viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'><g transform='rotate(40 24 24)'><rect x='17' y='9' width='14' height='24' fill='#ffe08a' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><rect x='17' y='4' width='14' height='7' rx='3' fill='#ffb3c1' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><path d='M17 33 L31 33 L24 44 Z' fill='#f9d3ae' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><path d='M22.3 41.3 L24 44 L25.7 41.3 Z' fill='#6b5048'/><circle cx='20.9' cy='21' r='1.178' fill='#6b5048'/><circle cx='27.1' cy='21' r='1.178' fill='#6b5048'/><circle cx='21.272' cy='20.566' r='0.372' fill='#fff'/><circle cx='27.472' cy='20.566' r='0.372' fill='#fff'/><ellipse cx='18.73' cy='22.86' rx='1.488' ry='0.9299999999999999' fill='#ff8fa3' opacity='.6'/><ellipse cx='29.27' cy='22.86' rx='1.488' ry='0.9299999999999999' fill='#ff8fa3' opacity='.6'/><path d='M22.636 22.612000000000002 q1.364 1.488 2.728 0' stroke='#6b5048' stroke-width='0.9299999999999999' fill='none' stroke-linecap='round'/></g></svg></span> <span id="expFormTitle">記下一筆支出</span></h2>
           <p class="list-note">第一次使用？先記下今天的一筆支出吧！</p>
+          <div class="quick-box">
+            <label for="quickText">🎤 快速記帳</label>
+            <input type="text" id="quickText" maxlength="60" autocomplete="off" enterkeyhint="done" placeholder="按鍵盤上的麥克風說：排骨便當120現金">
+            <p class="quick-tip">也可以直接打字，例如「早餐 65」。會幫你填好下面的欄位，確認後再按「儲存」。</p>
+            <p class="quick-msg hidden" id="quickMsg" role="status"></p>
+          </div>
           <form id="expenseForm">
             <div class="form-grid">
               <div class="field">
@@ -3363,6 +3387,102 @@
   document.addEventListener("click", fitSoon);
   window.addEventListener("resize", fitSoon);
   document.querySelectorAll(".stat-fold").forEach(function (d) { d.addEventListener("toggle", fitSoon); });
+
+  // ===== 快速記帳：從一句話拆出 分類、付款、金額、說明 =====
+  var QUICK_CATS = [
+    ["育兒", ["尿布", "奶粉", "奶瓶", "托嬰", "托婴", "保母", "保姆", "安親", "安亲", "幼兒園", "幼儿园", "童裝", "童装", "玩具"]],
+    ["寵物", ["飼料", "饲料", "貓砂", "猫砂", "罐罐", "獸醫", "兽医", "寵物", "宠物", "狗糧", "狗粮", "貓糧", "猫粮"]],
+    ["醫療", ["看醫生", "看医生", "診所", "诊所", "掛號", "挂号", "醫院", "医院", "牙醫", "牙医", "藥局", "药局", "藥", "药", "健檢", "体检"]],
+    ["電信費", ["電話費", "电话费", "手機費", "手机费", "月租", "電信", "电信"]],
+    ["網路費", ["網路費", "网路费", "網路", "网路", "寬頻", "宽带", "第四台"]],
+    ["水費", ["水費", "水费"]], ["電費", ["電費", "电费"]], ["瓦斯費", ["瓦斯", "天然氣", "天然气"]],
+    ["房租", ["房租", "租金", "管理費", "管理费"]], ["保險費", ["保險", "保险", "保費", "保费"]],
+    ["貸款", ["貸款", "贷款", "房貸", "房贷", "車貸", "车贷"]],
+    ["訂閱服務", ["訂閱", "订阅", "netflix", "spotify", "youtube", "disney", "icloud", "chatgpt"]],
+    ["交通", ["計程車", "计程车", "uber", "捷運", "捷运", "公車", "公车", "客運", "客运", "高鐵", "高铁", "台鐵", "台铁", "火車", "火车", "加油", "油錢", "油钱", "停車", "停车", "悠遊卡", "悠游卡", "一卡通", "機票", "机票", "車票", "车票", "騎車", "单车", "ubike", "youbike", "過路費", "etc"]],
+    ["娛樂", ["電影", "电影", "ktv", "唱歌", "遊戲", "游戏", "門票", "门票", "旅遊", "旅游", "樂園", "乐园", "展覽", "展览", "演唱會", "演唱会"]],
+    ["購物", ["全聯", "全联", "家樂福", "家乐福", "好市多", "costco", "蝦皮", "虾皮", "momo", "衛生紙", "卫生纸", "洗髮精", "洗发精", "洗衣精", "沐浴乳", "牙膏", "衣服", "褲子", "裤子", "鞋", "包包", "日用品", "化妝品", "化妆品", "保養", "保养"]],
+    ["居家", ["家具", "傢俱", "燈泡", "灯泡", "修理", "維修", "维修", "清潔", "清洁", "五金", "ikea", "宜得利"]],
+    ["餐飲", ["便當", "便当", "早餐", "午餐", "晚餐", "宵夜", "飲料", "饮料", "咖啡", "奶茶", "珍奶", "手搖", "手摇", "水果", "香蕉", "蘋果", "苹果", "麥當勞", "麦当劳", "肯德基", "星巴克", "雞排", "鸡排", "火鍋", "火锅", "小吃", "零食", "點心", "点心", "蛋糕", "麵包", "面包", "牛奶", "麵", "拉面", "面条", "饭", "飯", "餐", "吃"]]
+  ];
+  var CN_DIGIT = { "零": 0, "〇": 0, "一": 1, "壹": 1, "二": 2, "兩": 2, "两": 2, "貳": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9 };
+  var CN_UNIT = { "十": 10, "拾": 10, "百": 100, "佰": 100, "千": 1000, "仟": 1000, "萬": 10000, "万": 10000 };
+  function cnToNum(t) {
+    var total = 0, section = 0, num = 0, lastUnit = 0, sawDigitAfterUnit = false;
+    for (var i = 0; i < t.length; i++) {
+      var c = t[i];
+      if (c in CN_DIGIT) { num = CN_DIGIT[c]; sawDigitAfterUnit = lastUnit > 0; }
+      else if (c in CN_UNIT) {
+        var u = CN_UNIT[c];
+        if (u === 10000) { section = (section + num) * 10000; total += section; section = 0; num = 0; lastUnit = 10000; sawDigitAfterUnit = false; continue; }
+        section += (num || (u === 10 ? 1 : 0)) * u; num = 0; lastUnit = u; sawDigitAfterUnit = false;
+      }
+    }
+    // 「一百二」「一千二」「一萬二」：最後一個數字代表下一位
+    if (num && sawDigitAfterUnit && lastUnit >= 100) num = num * lastUnit / 10;
+    else if (num && sawDigitAfterUnit && lastUnit === 10000) num = num * 1000;
+    return total + section + num;
+  }
+  function parseQuick(text) {
+    var t = String(text || "").trim(), low = t.toLowerCase(), out = { note: "", amount: null, pay: null, cat: null };
+    if (!t) return out;
+    if (/刷卡|信用卡|刷信用卡|用卡/.test(t)) out.pay = "card";
+    else if (/現金|现金|付現|付现|現付|现付/.test(t)) out.pay = "cash";
+    var rest = t.replace(/刷信用卡|刷卡|信用卡|用卡|現金|现金|付現|付现|現付|现付/g, " ");
+    // 有「塊／元」的數字優先；沒有的話用最後一個數字（例如「7-11 咖啡 85」是 85）
+    var all = [], re = /(\d[\d,，]*)\s*(塊錢|块钱|塊|块|元整|元|圓|圆|蚊)?/g, mm;
+    while ((mm = re.exec(rest))) all.push(mm);
+    var m = null;
+    all.forEach(function (x) { if (x[2]) m = m && m[2] ? m : x; });
+    if (!m && all.length) m = all[all.length - 1];
+    if (m) { out.amount = parseInt(m[1].replace(/[,，]/g, ""), 10); rest = rest.slice(0, m.index) + " " + rest.slice(m.index + m[0].length); }
+    else {
+      var c = rest.match(/([零〇一壹二兩两貳三四五六七八九十拾百佰千仟萬万]+)\s*(塊錢|块钱|塊|块|元整|元|圓|圆)?/g);
+      if (c) {
+        // 挑最像金額的：有「塊／元」或含「百／千／萬」的那一段
+        var best = null;
+        c.forEach(function (seg) { if (/[塊块元圓圆百佰千仟萬万十拾]/.test(seg) && (!best || seg.length > best.length)) best = seg; });
+        if (best) { var n = cnToNum(best.replace(/塊錢|块钱|塊|块|元整|元|圓|圆/g, "")); if (n > 0) { out.amount = n; rest = rest.replace(best, " "); } }
+      }
+    }
+    if (out.amount !== null && !(out.amount > 0)) out.amount = null;
+    out.note = rest.replace(/[，,。.！!？?、；;：:]/g, " ").replace(/\s*(花了|總共|总共|一共|共)\s*/g, " ").replace(/\s+/g, " ").trim().slice(0, 40);
+    var hay = (out.note || low).toLowerCase();
+    EXPENSE_CATEGORIES.forEach(function (cat) { if (!out.cat && hay.indexOf(cat) !== -1) out.cat = cat; });
+    for (var i = 0; !out.cat && i < QUICK_CATS.length; i++) {
+      for (var j = 0; j < QUICK_CATS[i][1].length; j++) if (hay.indexOf(QUICK_CATS[i][1][j]) !== -1) { out.cat = QUICK_CATS[i][0]; break; }
+    }
+    return out;
+  }
+  function flash(el) { if (!el) return; el.classList.remove("quick-filled"); void el.offsetWidth; el.classList.add("quick-filled"); }
+  function applyQuick() {
+    var box = $("quickText"), msg = $("quickMsg");
+    if (!box) return;
+    var r = parseQuick(box.value);
+    if (!box.value.trim()) { msg.classList.add("hidden"); return; }
+    var parts = [], missing = [];
+    if (r.cat && Array.prototype.some.call($("expCategory").options, function (o) { return o.value === r.cat; })) {
+      $("expCategory").value = r.cat; $("expCategory").dispatchEvent(new Event("change")); flash($("expCategory")); parts.push(r.cat);
+    } else missing.push("分類");
+    if (r.pay) { setPill("pay", r.pay); flash(document.querySelector('input[name="pay"][value="' + r.pay + '"]').closest("label")); parts.push(r.pay === "card" ? "信用卡" : "現金"); }
+    if (r.amount) { $("expAmount").value = r.amount; flash($("expAmount")); parts.push(formatMoney(r.amount) + " 元"); } else missing.push("金額");
+    if (r.note) { $("expItem").value = r.note; flash($("expItem")); parts.push(r.note); }
+    if (typeof updateInstPreview === "function") updateInstPreview();
+    msg.className = "quick-msg " + (missing.length ? "warn" : "ok");
+    msg.textContent = (parts.length ? "✨ 已幫你填好：" + parts.join("・") + "。" : "") +
+      (missing.length ? "沒聽出" + missing.join("和") + "，請在下面選或填。" : "請確認下面的內容，沒問題就按「儲存」。");
+  }
+  (function () {
+    var box = $("quickText"), timer = null;
+    if (!box) return;
+    box.addEventListener("input", function () { clearTimeout(timer); timer = setTimeout(applyQuick, 600); });
+    box.addEventListener("change", applyQuick);
+    box.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); clearTimeout(timer); applyQuick(); box.blur(); } });
+    // 儲存成功後（金額欄被清空），快速記帳也一起清空
+    $("expenseForm").addEventListener("submit", function () {
+      setTimeout(function () { if (!$("expAmount").value) { box.value = ""; $("quickMsg").classList.add("hidden"); } }, 0);
+    });
+  })();
 
   // ===== 年度報表：今年、去年、前年，都算 1/1 到「今天這個日期」 =====
   function renderYearReport() {
