@@ -66,6 +66,24 @@
   .fd-row .fd-amt { font-weight: bold; white-space: nowrap; }
   .fd-note { font-size: 13px; color: #8a7a72; margin-top: 6px; }
   @media (max-width: 820px) { .future-grid { grid-template-columns: repeat(3, 1fr); } .f-tile { min-height: 110px; } }
+  .search-box { position: relative; margin: -2px 0 14px; }
+  .search-box input {
+    width: 100%; box-sizing: border-box; padding: 10px 40px 10px 14px; font-size: 16px; font-family: inherit; color: #5a4a42;
+    border: 2px solid #f3ddd0; border-radius: 999px; background: #fffdfb; -webkit-appearance: none; appearance: none;
+  }
+  .search-box input:focus { outline: none; border-color: #ffa8b8; box-shadow: 0 0 0 4px #ffe4ea; }
+  .search-box input::-webkit-search-cancel-button { display: none; }
+  .search-box .clear-x {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; border-radius: 50%;
+    border: none; background: #f6e6dc; color: #8a6e62; font-size: 16px; line-height: 28px; cursor: pointer; padding: 0;
+  }
+  .search-info { font-size: 14px; color: #8a6e62; margin: -6px 0 10px; }
+  .search-info b { color: #e85a7a; }
+  body.theme-teddy .search-box input { border-color: #ead3bd; } body.theme-teddy .search-box input:focus { border-color: #dca57b; box-shadow: 0 0 0 4px #fbe9d8; }
+  body.theme-leaf .search-box input { border-color: #c6e4d8; } body.theme-leaf .search-box input:focus { border-color: #86ccb6; box-shadow: 0 0 0 4px #e2f5ee; }
+  body.theme-vehicle .search-box input { border-color: #c9dbf3; } body.theme-vehicle .search-box input:focus { border-color: #8db6ec; box-shadow: 0 0 0 4px #e3eefc; }
+  body.theme-bow .search-box input { border-color: #e2d6f5; } body.theme-bow .search-box input:focus { border-color: #c4b0ea; box-shadow: 0 0 0 4px #f1ebfc; }
+  body.theme-bow .search-info b { color: #7a5fb5; }
   .list-tools { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: #a08c82; margin: -8px 0 12px; }
   .privacy-btn {
     display: inline-flex; align-items: center; gap: 6px; padding: 6px 16px; font-size: 15px; font-family: inherit; font-weight: bold;
@@ -870,6 +888,8 @@
         <div class="card">
           <h2><span class="icon" aria-hidden="true"><svg viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'><rect x='10' y='7' width='29' height='34' rx='5' fill='#ffdcb0' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><path d='M16 7 V41' stroke='#f2b67a' stroke-width='3'/><rect x='10' y='7' width='29' height='34' rx='5' fill='none' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><circle cx='23.0' cy='25' r='1.71' fill='#6b5048'/><circle cx='32.0' cy='25' r='1.71' fill='#6b5048'/><circle cx='23.54' cy='24.37' r='0.54' fill='#fff'/><circle cx='32.54' cy='24.37' r='0.54' fill='#fff'/><ellipse cx='19.85' cy='27.7' rx='2.16' ry='1.35' fill='#ff8fa3' opacity='.6'/><ellipse cx='35.15' cy='27.7' rx='2.16' ry='1.35' fill='#ff8fa3' opacity='.6'/><path d='M25.52 27.34 q1.9800000000000002 2.16 3.9600000000000004 0' stroke='#6b5048' stroke-width='1.35' fill='none' stroke-linecap='round'/></svg></span> 收入明細</h2>
           <div class="list-tools"><span id="incListInfo"></span><button type="button" class="link-btn" id="incAllBtn">看全部月份</button></div>
+          <div class="search-box"><input type="search" id="incSearch" placeholder="🔍 搜尋，例如：獎金" maxlength="40" autocomplete="off" enterkeyhint="search" aria-label="搜尋收入紀錄"><button type="button" class="clear-x hidden" id="incSearchClear" aria-label="清除搜尋">✕</button></div>
+          <p class="search-info hidden" id="incSearchInfo"></p>
           <div class="table-wrap">
             <table>
               <thead><tr><th>日期</th><th>分類</th><th>說明</th><th class="amount">金額</th><th></th></tr></thead>
@@ -1001,6 +1021,8 @@
         <div class="card">
           <h2><span class="icon" aria-hidden="true"><svg viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'><rect x='10' y='7' width='29' height='34' rx='5' fill='#ffdcb0' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><path d='M16 7 V41' stroke='#f2b67a' stroke-width='3'/><rect x='10' y='7' width='29' height='34' rx='5' fill='none' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><circle cx='23.0' cy='25' r='1.71' fill='#6b5048'/><circle cx='32.0' cy='25' r='1.71' fill='#6b5048'/><circle cx='23.54' cy='24.37' r='0.54' fill='#fff'/><circle cx='32.54' cy='24.37' r='0.54' fill='#fff'/><ellipse cx='19.85' cy='27.7' rx='2.16' ry='1.35' fill='#ff8fa3' opacity='.6'/><ellipse cx='35.15' cy='27.7' rx='2.16' ry='1.35' fill='#ff8fa3' opacity='.6'/><path d='M25.52 27.34 q1.9800000000000002 2.16 3.9600000000000004 0' stroke='#6b5048' stroke-width='1.35' fill='none' stroke-linecap='round'/></svg></span> 支出明細</h2>
           <div class="list-tools"><span id="expListInfo"></span><button type="button" class="link-btn" id="expAllBtn">看全部月份</button></div>
+          <div class="search-box"><input type="search" id="expSearch" placeholder="🔍 搜尋，例如：洗髮精" maxlength="40" autocomplete="off" enterkeyhint="search" aria-label="搜尋支出紀錄"><button type="button" class="clear-x hidden" id="expSearchClear" aria-label="清除搜尋">✕</button></div>
+          <p class="search-info hidden" id="expSearchInfo"></p>
           <div class="table-wrap">
             <table>
               <thead><tr><th>日期</th><th>分類</th><th>付款</th><th>說明</th><th class="amount">金額</th><th></th></tr></thead>
@@ -1754,10 +1776,13 @@
 
     var tbody = $("incomeList");
     var allInc = records.filter(function (r) { return r.type === "income"; });
-    var list = sortNewest(showAllMonths ? allInc : allInc.filter(inMonth));
+    var incQ = searchTerm("inc");
+    var list = sortNewest(incQ ? allInc.filter(function (r) { return matchRec(r, incQ); }) : (showAllMonths ? allInc : allInc.filter(inMonth)));
     listInfo("inc", list.length);
+    searchInfo("inc", list, incQ);
     if (loadFailed) return emptyRow(tbody, 5, "無法讀取記帳資料，請重新整理網頁再試一次。");
     if (!allInc.length) return emptyRow(tbody, 5, "還沒有收入紀錄，從第一筆開始吧！");
+    if (incQ && !list.length) return emptyRow(tbody, 5, "換個關鍵字試試看，例如分類名稱「工資」。");
     if (!list.length) return emptyRow(tbody, 5, ymLabel(viewMonth) + "沒有收入紀錄。按「看全部月份」可以看其他月份。");
     tbody.innerHTML = "";
     list.forEach(function (r) {
@@ -1793,10 +1818,13 @@
 
     var tbody = $("expenseList");
     var allExp = records.filter(function (r) { return r.type !== "income"; });
-    var list = sortNewest(showAllMonths ? allExp : allExp.filter(inMonth));
+    var expQ = searchTerm("exp");
+    var list = sortNewest(expQ ? allExp.filter(function (r) { return matchRec(r, expQ); }) : (showAllMonths ? allExp : allExp.filter(inMonth)));
     listInfo("exp", list.length);
+    searchInfo("exp", list, expQ);
     if (loadFailed) return emptyRow(tbody, 6, "無法讀取記帳資料，請重新整理網頁再試一次。");
     if (!allExp.length) return emptyRow(tbody, 6, "還沒有支出紀錄，從第一筆開始吧！");
+    if (expQ && !list.length) return emptyRow(tbody, 6, "換個關鍵字試試看，例如分類名稱「餐飲」。");
     if (!list.length) return emptyRow(tbody, 6, ymLabel(viewMonth) + "沒有支出紀錄。按「看全部月份」可以看其他月份。");
     tbody.innerHTML = "";
     list.forEach(function (r) {
@@ -2471,6 +2499,34 @@
   }
 
   // ===== 選擇月份 =====
+  // ===== 搜尋：比對說明和分類，找全部月份 =====
+  function searchTerm(kind) { var el = $(kind + "Search"); return el ? el.value.trim().toLowerCase() : ""; }
+  function matchRec(r, q) {
+    return String(r.note || "").toLowerCase().indexOf(q) !== -1 || String(r.category || "").toLowerCase().indexOf(q) !== -1;
+  }
+  function searchInfo(kind, list, q) {
+    var info = $(kind + "SearchInfo"), clr = $(kind + "SearchClear");
+    clr.classList.toggle("hidden", !q);
+    $(kind + "AllBtn").classList.toggle("hidden", !!q);
+    if (q) $(kind + "ListInfo").textContent = "搜尋結果（全部月份），最新的排在最上面。";
+    if (!q) { info.classList.add("hidden"); info.textContent = ""; return; }
+    var total = 0; list.forEach(function (r) { total += r.amount; });
+    info.innerHTML = "";
+    if (!list.length) { info.textContent = "找不到「" + $(kind + "Search").value.trim() + "」的紀錄（已找過全部月份）。"; }
+    else {
+      info.appendChild(document.createTextNode("找到 "));
+      var b = document.createElement("b"); b.textContent = list.length + " 筆"; info.appendChild(b);
+      info.appendChild(document.createTextNode("「" + $(kind + "Search").value.trim() + "」，共 " + formatMoney(round2(total)) + " 元（全部月份）"));
+    }
+    info.classList.remove("hidden");
+  }
+  ["inc", "exp"].forEach(function (kind) {
+    var redraw = function () { if (kind === "inc") renderIncome(); else renderExpense(); };
+    $(kind + "Search").addEventListener("input", redraw);
+    $(kind + "Search").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); this.blur(); } });
+    $(kind + "SearchClear").addEventListener("click", function () { $(kind + "Search").value = ""; redraw(); $(kind + "Search").focus(); });
+  });
+
   function listInfo(kind, n) {
     $(kind + "ListInfo").textContent = showAllMonths ? "目前顯示全部月份（共 " + n + " 筆），最新的排在最上面。" : "目前顯示 " + ymLabel(viewMonth) + "（共 " + n + " 筆），最新的排在最上面。";
     $(kind + "AllBtn").textContent = showAllMonths ? "只看 " + ymLabel(viewMonth) : "看全部月份";
@@ -2691,6 +2747,7 @@
     ["homeMessage", "incomeMessage", "expenseMessage", "salaryMessage", "planMessage", "budgetMessage", "goalMessage", "trashMessage", "personTrashMessage", "backupMessage"].forEach(function (id) { var el = $(id); if (el) { el.textContent = ""; el.className = "message"; } });
   }
   function switchProfile(id) {
+    ["inc", "exp"].forEach(function (k) { var el = $(k + "Search"); if (el) el.value = ""; });
     if (id === currentId) return;
     if (editingIncomeId) endEditIncome();
     if (editingExpenseId) endEditExpense();
