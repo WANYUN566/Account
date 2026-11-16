@@ -3644,6 +3644,15 @@
     updateInvStatus();
     $("invModal").classList.remove("hidden");
   }
+  // 這位記帳者是不是已經記過這張發票（刪掉的不算）
+  function invoiceRecorded(number) {
+    var hit = records.filter(function (r) { return r.invoice === number; });
+    if (!hit.length) return null;
+    return { count: hit.length, total: round2(hit.reduce(function (a, r) { return a + r.amount; }, 0)), date: hit[0].date };
+  }
+  function duplicateText(d) {
+    return "這張發票已經記過了（" + d.date.replace(/-/g, "/") + " 記了 " + d.count + " 筆，共 " + formatMoney(d.total) + " 元），不能再記一次。如果有漏記的品項，請用上面的一般記帳補上。";
+  }
   function closeInvoice() { $("invModal").classList.add("hidden"); invData = null; }
   function saveInvoice() {
     var msg = $("invModalMsg"), rows = invRowsData().filter(function (r) { return r.on; });
@@ -3654,8 +3663,10 @@
     }
     var doSave = function () {
       if (loadFailed) { showMessage(msg, LOAD_ERROR_TEXT, "error"); return; }
+      var dup = invoiceRecorded(invData.number);
+      if (dup) { showMessage(msg, duplicateText(dup), "error"); return; }
       var pay = pillValue("invpay"), date = invData.date, recs = rows.map(function (r) {
-        var rec = { id: newId(), date: date, type: "expense", category: r.cat, payment: pay, amount: r.amount, note: r.name };
+        var rec = { id: newId(), date: date, type: "expense", category: r.cat, payment: pay, amount: r.amount, note: r.name, invoice: invData.number };
         if (canInstall(r.cat)) rec.installment = 0;
         return rec;
       });
@@ -3678,6 +3689,7 @@
     $("invBtn").addEventListener("click", function () { $("invFile").value = ""; $("invFile").click(); });
     $("invFile").addEventListener("change", function () {
       var f = this.files && this.files[0]; if (!f) return;
+      this.value = ""; // 清空，下次選同一張照片也會重新讀
       invMsg("讀取發票中…", "ok");
       loadJsQR().then(function () {
         var url = URL.createObjectURL(f), img = new Image();
@@ -3686,6 +3698,8 @@
           URL.revokeObjectURL(url);
           var inv = codes.length ? parseInvoice(codes) : null;
           if (!inv) { invMsg("讀不到發票的 QR Code，請拍清楚一點，讓兩個 QR Code 都在照片裡。（只支援電子發票證明聯）", "warn"); return; }
+          var dup = invoiceRecorded(inv.number);
+          if (dup) { invMsg(duplicateText(dup), "warn"); return; }
           $("invMsg").classList.add("hidden");
           openInvoice(inv);
         };
