@@ -258,6 +258,28 @@
   body.theme-vehicle .quick-box { background: #eaf2fd; } body.theme-bow .quick-box { background: #f3eefc; }
   body.theme-bow .quick-box input { border-color: #e2d6f5; } body.theme-bow .quick-box input:focus { border-color: #c4b0ea; box-shadow: 0 0 0 4px #f1ebfc; }
   @media (prefers-reduced-motion: reduce) { .quick-filled { animation: none; } }
+  /* ===== 掃電子發票 ===== */
+  .inv-btn {
+    width: 100%; margin-top: 10px; padding: 10px; font-size: 16px; font-family: inherit; font-weight: bold;
+    background: #fff; color: #8a6e62; border: 2px dashed #f3ddd0; border-radius: 14px; cursor: pointer;
+  }
+  .inv-btn:hover { background: #fffaf5; }
+  #invModal .modal-box { max-width: 520px; max-height: 92vh; overflow-y: auto; }
+  .inv-meta { font-size: 15px; margin: 0 0 10px; }
+  .inv-status { border-radius: 12px; padding: 10px 12px; font-size: 14px; line-height: 1.6; margin-bottom: 12px; }
+  .inv-status.warn { background: #fff4d6; color: #8a5a00; border: 2px solid #ffd36b; }
+  .inv-status.ok { background: #e4f7ec; color: #23704a; border: 2px solid #9fdcbd; }
+  .inv-row { display: grid; grid-template-columns: 26px 1fr 84px; gap: 6px 8px; align-items: center; padding: 8px 0; border-bottom: 2px dashed #f6e6dc; }
+  .inv-row input[type=checkbox] { width: 20px; height: 20px; accent-color: #e85a7a; }
+  .inv-row input[type=text], .inv-row input[type=number], .inv-row select {
+    width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 16px; font-family: inherit; color: #5a4a42;
+    border: 2px solid #f3ddd0; border-radius: 10px; background: #fffdfb; min-width: 0;
+  }
+  .inv-row select { grid-column: 2 / 4; }
+  .inv-row.off input[type=text], .inv-row.off input[type=number], .inv-row.off select { opacity: .45; }
+  .inv-add { margin: 10px 0 14px; }
+  .inv-pay { margin-bottom: 14px; }
+  body.theme-bow .inv-btn { border-color: #e2d6f5; color: #7a5fb5; }
   /* ===== 年度報表 ===== */
   .year-list { list-style: none; margin: 0; padding: 0; }
   .year-list li { padding: 12px 0; border-bottom: 2px dashed #f6e6dc; }
@@ -984,6 +1006,9 @@
             <input type="text" id="quickText" maxlength="60" autocomplete="off" enterkeyhint="done" placeholder="按鍵盤上的麥克風說：排骨便當120現金">
             <p class="quick-tip">也可以直接打字，例如「早餐 65」。會幫你填好下面的欄位，確認後再按「儲存」。</p>
             <p class="quick-msg hidden" id="quickMsg" role="status"></p>
+            <button type="button" class="inv-btn" id="invBtn">📷 掃電子發票</button>
+            <input type="file" id="invFile" accept="image/*" class="hidden">
+            <p class="quick-msg hidden" id="invMsg" role="status"></p>
           </div>
           <form id="expenseForm">
             <div class="form-grid">
@@ -1200,6 +1225,25 @@
     <p class="confirm-text">這個瀏覽器不讓記帳本自動複製。<br>請在下面的框框裡<b>長按 →「全選」→「拷貝」</b>，再用瀏覽器打開記帳本，到「管理」頁按「貼上備份文字」。</p>
     <textarea class="backup-text" id="copyText" readonly></textarea>
     <button type="button" class="cancel-btn" id="copyClose">關閉</button>
+  </div>
+</div>
+<div class="modal hidden" id="invModal" role="dialog" aria-modal="true" aria-labelledby="invTitle">
+  <div class="modal-box">
+    <h2 id="invTitle">📷 掃到的發票</h2>
+    <p class="inv-meta" id="invMeta"></p>
+    <div class="inv-status" id="invStatus" role="status"></div>
+    <div id="invRows"></div>
+    <button type="button" class="link-btn inv-add" id="invAdd">＋ 新增一行</button>
+    <div class="field inv-pay">
+      <label class="title">付款方式</label>
+      <div class="pill-group" id="invPayGroup">
+        <label class="on"><input type="radio" name="invpay" value="cash" checked><span>現金</span></label>
+        <label><input type="radio" name="invpay" value="card"><span>信用卡</span></label>
+      </div>
+    </div>
+    <div class="message" id="invModalMsg"></div>
+    <button type="button" class="save-btn" id="invSave">全部儲存</button>
+    <button type="button" class="cancel-btn" id="invCancel">取消</button>
   </div>
 </div>
 <div class="modal confirm-modal hidden" id="importModal" role="alertdialog" aria-modal="true" aria-labelledby="importTitle" aria-describedby="importText">
@@ -3401,7 +3445,7 @@
     ["訂閱服務", ["訂閱", "订阅", "netflix", "spotify", "youtube", "disney", "icloud", "chatgpt"]],
     ["交通", ["計程車", "计程车", "uber", "捷運", "捷运", "公車", "公车", "客運", "客运", "高鐵", "高铁", "台鐵", "台铁", "火車", "火车", "加油", "油錢", "油钱", "停車", "停车", "悠遊卡", "悠游卡", "一卡通", "機票", "机票", "車票", "车票", "騎車", "单车", "ubike", "youbike", "過路費", "etc"]],
     ["娛樂", ["電影", "电影", "ktv", "唱歌", "遊戲", "游戏", "門票", "门票", "旅遊", "旅游", "樂園", "乐园", "展覽", "展览", "演唱會", "演唱会"]],
-    ["購物", ["全聯", "全联", "家樂福", "家乐福", "好市多", "costco", "蝦皮", "虾皮", "momo", "衛生紙", "卫生纸", "洗髮精", "洗发精", "洗衣精", "沐浴乳", "牙膏", "衣服", "褲子", "裤子", "鞋", "包包", "日用品", "化妝品", "化妆品", "保養", "保养"]],
+    ["購物", ["全聯", "全联", "家樂福", "家乐福", "好市多", "costco", "蝦皮", "虾皮", "momo", "衛生紙", "卫生纸", "洗髮精", "洗发精", "洗衣精", "洗碗精", "沐浴乳", "牙膏", "衣服", "褲子", "裤子", "鞋", "包包", "日用品", "化妝品", "化妆品", "保養", "保养"]],
     ["居家", ["家具", "傢俱", "燈泡", "灯泡", "修理", "維修", "维修", "清潔", "清洁", "五金", "ikea", "宜得利"]],
     ["餐飲", ["便當", "便当", "早餐", "午餐", "晚餐", "宵夜", "飲料", "饮料", "咖啡", "奶茶", "珍奶", "手搖", "手摇", "水果", "香蕉", "蘋果", "苹果", "麥當勞", "麦当劳", "肯德基", "星巴克", "雞排", "鸡排", "火鍋", "火锅", "小吃", "零食", "點心", "点心", "蛋糕", "麵包", "面包", "牛奶", "麵", "拉面", "面条", "饭", "飯", "餐", "吃"]]
   ];
@@ -3482,6 +3526,176 @@
     $("expenseForm").addEventListener("submit", function () {
       setTimeout(function () { if (!$("expAmount").value) { box.value = ""; $("quickMsg").classList.add("hidden"); } }, 0);
     });
+  })();
+
+  // ===== 掃電子發票：拍照 → 讀兩個 QR Code → 每個品項一筆 → 確認後儲存 =====
+  // 照片只在這支手機裡讀，不會上傳。讀 QR Code 的工具（jsQR）第一次用的時候才下載。
+  var jsQRLoading = null;
+  function loadJsQR() {
+    if (window.jsQR) return Promise.resolve();
+    if (jsQRLoading) return jsQRLoading;
+    jsQRLoading = new Promise(function (ok, fail) {
+      var sc = document.createElement("script");
+      sc.src = "https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js";
+      sc.onload = function () { window.jsQR ? ok() : fail(); };
+      sc.onerror = function () { jsQRLoading = null; fail(); };
+      document.head.appendChild(sc);
+    });
+    return jsQRLoading;
+  }
+  function invMsg(text, kind) { var m = $("invMsg"); m.textContent = text; m.className = "quick-msg " + (kind || "warn"); }
+  // 從一張圖找出所有 QR Code（找到一個就把它塗白，再找下一個）
+  function findQRCodes(img) {
+    var maxSide = 1800, sc = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+    var w = Math.round(img.naturalWidth * sc), h = Math.round(img.naturalHeight * sc);
+    var cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+    var cx = cv.getContext("2d"); cx.drawImage(img, 0, 0, w, h);
+    var found = [];
+    for (var k = 0; k < 4; k++) {
+      var data = cx.getImageData(0, 0, w, h);
+      var code = window.jsQR(data.data, w, h, { inversionAttempts: "attemptBoth" });
+      if (!code) break;
+      found.push(new Uint8Array(code.binaryData));
+      var L = code.location, xs = [L.topLeftCorner.x, L.topRightCorner.x, L.bottomLeftCorner.x, L.bottomRightCorner.x],
+          ys = [L.topLeftCorner.y, L.topRightCorner.y, L.bottomLeftCorner.y, L.bottomRightCorner.y];
+      var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs), y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys), pad = (x1 - x0) * 0.15;
+      cx.fillStyle = "#ffffff"; cx.fillRect(x0 - pad, y0 - pad, x1 - x0 + pad * 2, y1 - y0 + pad * 2);
+    }
+    return found;
+  }
+  function latin1(bytes) { var t = ""; for (var i = 0; i < bytes.length; i++) t += String.fromCharCode(bytes[i]); return t; }
+  function decodeBytes(bytes, enc) {
+    try {
+      if (enc === "0") return new TextDecoder("big5").decode(bytes);
+      if (enc === "2") { var t = latin1(bytes); return t.split(":").map(function (part) { try { return new TextDecoder("utf-8").decode(Uint8Array.from(atob(part), function (c) { return c.charCodeAt(0); })); } catch (e) { return part; } }).join(":"); }
+      return new TextDecoder("utf-8").decode(bytes);
+    } catch (e) { return latin1(bytes); }
+  }
+  // 依財政部電子發票證明聯 QR Code 格式解析
+  function parseInvoice(codes) {
+    var left = null, right = null;
+    codes.forEach(function (b) {
+      var head = latin1(b.slice(0, 12));
+      if (/^\*\*/.test(head)) right = right || b;
+      else if (/^[A-Z]{2}\d{8}\d{7}/.test(latin1(b.slice(0, 17)))) left = left || b;
+    });
+    if (!left) return null;
+    var h = latin1(left);
+    var inv = { number: h.slice(0, 10), total: parseInt(h.slice(29, 37), 16), items: [], hasRight: !!right };
+    var y = parseInt(h.slice(10, 13), 10) + 1911, mo = h.slice(13, 15), d = h.slice(15, 17);
+    inv.date = y + "-" + mo + "-" + d;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(inv.date) || isNaN(inv.total)) return null;
+    var tailHead = h.slice(77).split(":"); // ["", 自用區, 品目筆數, 總品目筆數, 編碼, 名稱, 數量, 單價, ...]
+    var enc = tailHead[4] || "1";
+    inv.totalCount = parseInt(tailHead[3], 10) || 0;
+    var leftText = decodeBytes(left.slice(77), enc).split(":").slice(5);
+    // 右邊 QR Code 以「**」開頭，有的店家後面會再接一個「:」，兩種都接受
+    var rightRaw = right ? decodeBytes(right.slice(2), enc).replace(/^\s*:/, "") : "";
+    var rightText = rightRaw ? rightRaw.split(":") : [];
+    if (leftText.length && leftText[leftText.length - 1].trim() === "") leftText.pop();
+    var f = leftText.concat(rightText).map(function (x) { return x.trim(); });
+    for (var i = 0; i + 2 < f.length; i += 3) {
+      var name = f[i], qty = parseFloat(f[i + 1]), price = parseFloat(f[i + 2]);
+      if (!name || isNaN(qty) || isNaN(price)) continue;
+      inv.items.push({ name: name.slice(0, 40), amount: Math.round(qty * price) });
+    }
+    return inv;
+  }
+  var invData = null;
+  function invRowHTML() {
+    var opts = EXPENSE_CATEGORIES.map(function (c) { return '<option value="' + c + '">' + c + '</option>'; }).join("");
+    return '<input type="checkbox" checked aria-label="要記這一筆"><input type="text" maxlength="40" placeholder="品項名稱"><input type="number" min="0" step="1" inputmode="numeric" placeholder="金額"><select aria-label="分類">' + opts + '</select>';
+  }
+  function addInvRow(item) {
+    var row = document.createElement("div"); row.className = "inv-row"; row.innerHTML = invRowHTML();
+    var t = row.querySelector("input[type=text]"), n = row.querySelector("input[type=number]"), sel = row.querySelector("select"), cb = row.querySelector("input[type=checkbox]");
+    t.value = item ? item.name : ""; n.value = item && item.amount ? item.amount : "";
+    var guess = item ? parseQuick(item.name).cat : null;
+    if (!guess && item && /洗碗|洗潔|清潔劑|洗衣|衛生紙|面紙|紙巾|垃圾袋|保鮮膜|電池/.test(item.name)) guess = "購物";
+    sel.value = guess || $("expCategory").value || "其他";
+    cb.addEventListener("change", function () { row.classList.toggle("off", !cb.checked); updateInvStatus(); });
+    n.addEventListener("input", updateInvStatus);
+    $("invRows").appendChild(row);
+    return row;
+  }
+  function invRowsData() {
+    return Array.prototype.map.call(document.querySelectorAll("#invRows .inv-row"), function (row) {
+      return { on: row.querySelector("input[type=checkbox]").checked, name: row.querySelector("input[type=text]").value.trim(),
+               amount: Number(row.querySelector("input[type=number]").value), cat: row.querySelector("select").value };
+    });
+  }
+  function invSum() { return invRowsData().reduce(function (a, r) { return a + (r.on && r.amount > 0 ? r.amount : 0); }, 0); }
+  function updateInvStatus() {
+    var st = $("invStatus"), sum = invSum(), total = invData.total, diff = total - sum;
+    if (diff === 0) { st.className = "inv-status ok"; st.textContent = "✅ 明細與總金額相符（" + formatMoney(total) + " 元）"; return; }
+    st.className = "inv-status warn";
+    st.textContent = "⚠️ 發票明細與總金額不符，請手動修改\n明細加起來 " + formatMoney(sum) + " 元，總金額 " + formatMoney(total) + " 元（" + (diff > 0 ? "少了 " : "多了 ") + formatMoney(Math.abs(diff)) + " 元）";
+    st.style.whiteSpace = "pre-line";
+  }
+  function openInvoice(inv) {
+    invData = inv;
+    $("invRows").innerHTML = "";
+    inv.items.forEach(function (it) { addInvRow(it); });
+    if (!inv.items.length) addInvRow(null);
+    $("invMeta").textContent = "發票日期 " + inv.date.replace(/-/g, "/") + "・總金額 " + formatMoney(inv.total) + " 元・讀到 " + inv.items.length + " 個品項" +
+      (inv.totalCount > inv.items.length ? "（發票上共 " + inv.totalCount + " 項，QR Code 只放了 " + inv.items.length + " 項）" : "");
+    setPill("invpay", pillValue("pay"));
+    $("invModalMsg").textContent = ""; $("invModalMsg").className = "message";
+    updateInvStatus();
+    $("invModal").classList.remove("hidden");
+  }
+  function closeInvoice() { $("invModal").classList.add("hidden"); invData = null; }
+  function saveInvoice() {
+    var msg = $("invModalMsg"), rows = invRowsData().filter(function (r) { return r.on; });
+    if (!rows.length) { showMessage(msg, "沒有勾選任何一筆。", "error"); return; }
+    for (var i = 0; i < rows.length; i++) {
+      if (!rows[i].name) { showMessage(msg, "第 " + (i + 1) + " 筆還沒有名稱。", "error"); return; }
+      if (!(rows[i].amount > 0) || Math.floor(rows[i].amount) !== rows[i].amount) { showMessage(msg, "「" + rows[i].name + "」的金額請填大於 0 的整數。", "error"); return; }
+    }
+    var doSave = function () {
+      if (loadFailed) { showMessage(msg, LOAD_ERROR_TEXT, "error"); return; }
+      var pay = pillValue("invpay"), date = invData.date, recs = rows.map(function (r) {
+        var rec = { id: newId(), date: date, type: "expense", category: r.cat, payment: pay, amount: r.amount, note: r.name };
+        if (canInstall(r.cat)) rec.installment = 0;
+        return rec;
+      });
+      var newRecords = records.concat(recs);
+      if (!saveAll(newRecords, settings)) { showMessage(msg, "沒有記下來：瀏覽器無法保存資料，請稍後再試一次。", "error"); return; }
+      records = newRecords;
+      var sum = rows.reduce(function (a, r) { return a + r.amount; }, 0);
+      closeInvoice(); renderAll();
+      showMessage($("expenseMessage"), "已從發票記入 " + recs.length + " 筆，共 " + formatMoney(sum) + " 元（日期 " + date.replace(/-/g, "/") + "）。" +
+        (date.slice(0, 7) !== viewMonth ? "這幾筆記在 " + ymLabel(date.slice(0, 7)) + "，切換到那個月就看得到。" : ""), "ok");
+      $("invMsg").classList.add("hidden");
+    };
+    var diff = invData.total - invSum();
+    if (diff !== 0) askConfirm({ title: "明細和總金額不符", text: "明細和總金額差 " + formatMoney(Math.abs(diff)) + " 元，確定要這樣儲存嗎？", okText: "確定儲存", cancelText: "回去修改" }, doSave);
+    else doSave();
+  }
+  (function () {
+    if (!$("invBtn")) return;
+    bindPills("invPayGroup");
+    $("invBtn").addEventListener("click", function () { $("invFile").value = ""; $("invFile").click(); });
+    $("invFile").addEventListener("change", function () {
+      var f = this.files && this.files[0]; if (!f) return;
+      invMsg("讀取發票中…", "ok");
+      loadJsQR().then(function () {
+        var url = URL.createObjectURL(f), img = new Image();
+        img.onload = function () {
+          var codes = []; try { codes = findQRCodes(img); } catch (e) {}
+          URL.revokeObjectURL(url);
+          var inv = codes.length ? parseInvoice(codes) : null;
+          if (!inv) { invMsg("讀不到發票的 QR Code，請拍清楚一點，讓兩個 QR Code 都在照片裡。（只支援電子發票證明聯）", "warn"); return; }
+          $("invMsg").classList.add("hidden");
+          openInvoice(inv);
+        };
+        img.onerror = function () { URL.revokeObjectURL(url); invMsg("這張圖片打不開，請換一張再試。", "warn"); };
+        img.src = url;
+      }, function () { invMsg("讀發票的工具沒有下載成功，請確認有網路再試一次。", "warn"); });
+    });
+    $("invAdd").addEventListener("click", function () { var r = addInvRow(null); updateInvStatus(); r.querySelector("input[type=text]").focus(); });
+    $("invSave").addEventListener("click", saveInvoice);
+    $("invCancel").addEventListener("click", closeInvoice);
   })();
 
   // ===== 年度報表：今年、去年、前年，都算 1/1 到「今天這個日期」 =====
