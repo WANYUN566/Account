@@ -258,6 +258,11 @@
   body.theme-vehicle .quick-box { background: #eaf2fd; } body.theme-bow .quick-box { background: #f3eefc; }
   body.theme-bow .quick-box input { border-color: #e2d6f5; } body.theme-bow .quick-box input:focus { border-color: #c4b0ea; box-shadow: 0 0 0 4px #f1ebfc; }
   @media (prefers-reduced-motion: reduce) { .quick-filled { animation: none; } }
+  /* ===== 修改每月固定金額 ===== */
+  .plan-act .edit-btn { margin: 0 6px 6px 0; }
+  #planEditModal .modal-box { max-width: 380px; }
+  #planEditModal .pe-now { font-size: 15px; color: #8a6e62; margin: 0 0 10px; }
+  #planEditModal .pe-note { font-size: 14px; color: #8a6e62; margin: 8px 0 14px; line-height: 1.6; }
   /* ===== 掃電子發票 ===== */
   .inv-btn {
     width: 100%; margin-top: 10px; padding: 10px; font-size: 16px; font-family: inherit; font-weight: bold;
@@ -1227,6 +1232,20 @@
     <button type="button" class="cancel-btn" id="copyClose">關閉</button>
   </div>
 </div>
+<div class="modal hidden" id="planEditModal" role="dialog" aria-modal="true" aria-labelledby="peTitle">
+  <div class="modal-box">
+    <h2 id="peTitle">修改每月金額</h2>
+    <p class="pe-now" id="peNow"></p>
+    <div class="field">
+      <label class="title" for="peAmount">新金額（元）</label>
+      <input type="number" id="peAmount" min="1" step="1" inputmode="numeric">
+    </div>
+    <p class="pe-note" id="peNote"></p>
+    <div class="message" id="peMsg"></div>
+    <button type="button" class="save-btn" id="peSave">儲存</button>
+    <button type="button" class="cancel-btn" id="peCancel">取消</button>
+  </div>
+</div>
 <div class="modal hidden" id="invModal" role="dialog" aria-modal="true" aria-labelledby="invTitle">
   <div class="modal-box">
     <h2 id="invTitle">📷 掃到的發票</h2>
@@ -1502,6 +1521,12 @@
         act.innerHTML = '<span class="plan-done">已停止</span>';
       } else {
         sub += (pl.recurring ? "・下一次：" : "・下一期：") + planDate(pl, pl.added + 1);
+        if (pl.recurring) {
+          var eb = document.createElement("button");
+          eb.type = "button"; eb.className = "edit-btn"; eb.textContent = "修改金額";
+          eb.addEventListener("click", function () { openPlanEdit(pl.id); });
+          act.appendChild(eb);
+        }
         var btn = document.createElement("button");
         btn.type = "button"; btn.className = "del-btn"; btn.textContent = "停止自動加入";
         btn.addEventListener("click", function () { stopPlan(pl.id); });
@@ -1511,6 +1536,43 @@
       list.appendChild(row);
     });
   }
+
+  // ===== 修改每月固定金額：從下一次開始，已記入的不變 =====
+  var editingPlanId = null;
+  function openPlanEdit(id) {
+    var pl = settings.plans.filter(function (x) { return x.id === id; })[0];
+    if (!pl || !pl.recurring) return;
+    editingPlanId = id;
+    var name = pl.category + (pl.note ? "・" + pl.note : "");
+    $("peTitle").textContent = "修改「" + name + "」的每月金額";
+    $("peNow").textContent = "目前每月 " + formatMoney(pl.per) + " 元";
+    $("peAmount").value = "";
+    $("peAmount").placeholder = String(pl.per);
+    $("peNote").textContent = "從下一次（" + planDate(pl, pl.added + 1) + "）開始用新金額。已經記入的 " + pl.added + " 次不會改變。";
+    $("peMsg").textContent = ""; $("peMsg").className = "message";
+    $("planEditModal").classList.remove("hidden");
+    $("peAmount").focus();
+  }
+  function closePlanEdit() { $("planEditModal").classList.add("hidden"); editingPlanId = null; }
+  function savePlanEdit() {
+    var msg = $("peMsg");
+    if (loadFailed) { showMessage(msg, LOAD_ERROR_TEXT, "error"); return; }
+    var amount = readAmount($("peAmount"), msg); if (amount === null) return;
+    var pl = settings.plans.filter(function (x) { return x.id === editingPlanId; })[0];
+    if (!pl) { closePlanEdit(); return; }
+    if (amount === pl.per) { showMessage(msg, "金額跟原本一樣，沒有改變。", "error"); return; }
+    var old = pl.per, newSettings = clone(settings);
+    newSettings.plans.forEach(function (x) { if (x.id === editingPlanId) { x.per = amount; x.principal = amount; } });
+    if (!saveAll(records, newSettings)) { showMessage(msg, "沒有改成功：瀏覽器無法保存資料，請稍後再試。", "error"); return; }
+    settings = newSettings;
+    var name = pl.category + (pl.note ? "・" + pl.note : ""), next = planDate(pl, pl.added + 1);
+    closePlanEdit(); renderAll();
+    showMessage($("planMessage"), "「" + name + "」從 " + next + " 開始改成每月 " + formatMoney(amount) + " 元（原本 " + formatMoney(old) + " 元）。已經記入的不變。", "ok");
+  }
+  $("peSave").addEventListener("click", savePlanEdit);
+  $("peCancel").addEventListener("click", closePlanEdit);
+  $("peAmount").addEventListener("input", function () { $("peMsg").textContent = ""; $("peMsg").className = "message"; });
+  $("peAmount").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); savePlanEdit(); } });
 
   function stopPlan(id) {
     var msg = $("planMessage");
