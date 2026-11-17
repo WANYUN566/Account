@@ -14,7 +14,7 @@
     font-family: "Huninn", "jf-openhuninn-2.0", "jf open 粉圓 2.0", "Yuanti TC", "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
     color: #5a4a42;
   }
-  .container { max-width: 1000px; margin: 0 auto; padding: 28px 16px 48px; }
+  .container { max-width: 1000px; margin: 0 auto; padding: 28px 16px 110px; }
   h1 { font-size: 28px; margin: 0 0 20px; text-align: center; color: #e85a7a; letter-spacing: 1px; }
   h2 { font-size: 19px; margin: 0 0 14px; color: #6b5048; }
   h3 { font-size: 16px; margin: 18px 0 10px; color: #6b5048; }
@@ -258,6 +258,37 @@
   body.theme-vehicle .quick-box { background: #eaf2fd; } body.theme-bow .quick-box { background: #f3eefc; }
   body.theme-bow .quick-box input { border-color: #e2d6f5; } body.theme-bow .quick-box input:focus { border-color: #c4b0ea; box-shadow: 0 0 0 4px #f1ebfc; }
   @media (prefers-reduced-motion: reduce) { .quick-filled { animation: none; } }
+  /* ===== 功能選單（右下角 ☰） ===== */
+  .nav-fab {
+    position: fixed; right: 16px; bottom: calc(18px + env(safe-area-inset-bottom)); z-index: 15;
+    width: 56px; height: 56px; border-radius: 50%; border: none; cursor: pointer;
+    background: #e85a7a; color: #fff; font-size: 26px; line-height: 56px; padding: 0;
+    box-shadow: 0 4px 0 #c4405f, 0 6px 16px rgba(90,74,66,.25); font-family: inherit;
+  }
+  .nav-fab:active { transform: translateY(2px); box-shadow: 0 2px 0 #c4405f; }
+  .nav-backdrop { position: fixed; inset: 0; background: rgba(90,74,66,.3); z-index: 13; }
+  .nav-sheet {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 14; max-height: 72vh; overflow-y: auto;
+    background: #fff; border-radius: 22px 22px 0 0; padding: 16px 16px calc(84px + env(safe-area-inset-bottom));
+    box-shadow: 0 -6px 20px rgba(90,74,66,.18); max-width: 640px; margin: 0 auto;
+  }
+  .nav-sheet h3 { margin: 0 0 6px; font-size: 18px; }
+  .nav-group { margin-top: 10px; }
+  .nav-group .ng-title { font-size: 13px; color: #a08c82; margin: 0 0 4px; }
+  .nav-items { display: flex; flex-wrap: wrap; gap: 8px; }
+  .nav-items button {
+    padding: 8px 14px; font-size: 15px; font-family: inherit; color: #5a4a42; cursor: pointer;
+    background: #fff6ee; border: 2px solid #f3ddd0; border-radius: 999px;
+  }
+  .nav-items button:hover { background: #ffe8ea; }
+  body.theme-teddy .nav-fab { background: #b0683a; box-shadow: 0 4px 0 #87481f, 0 6px 16px rgba(90,74,66,.25); }
+  body.theme-leaf .nav-fab { background: #2b8a7e; box-shadow: 0 4px 0 #1d6559, 0 6px 16px rgba(90,74,66,.25); }
+  body.theme-vehicle .nav-fab { background: #2f6fd0; box-shadow: 0 4px 0 #1f4f9a, 0 6px 16px rgba(90,74,66,.25); }
+  body.theme-bow .nav-fab { background: #9b7fd4; box-shadow: 0 4px 0 #7a5fb5, 0 6px 16px rgba(90,74,66,.25); }
+  body.theme-teddy .nav-items button { background: #fbf1e6; border-color: #ead3bd; }
+  body.theme-leaf .nav-items button { background: #eaf7f1; border-color: #c6e4d8; }
+  body.theme-vehicle .nav-items button { background: #eaf2fd; border-color: #c9dbf3; }
+  body.theme-bow .nav-items button { background: #f3eefc; border-color: #e2d6f5; }
   /* ===== 代墊款／待請款 ===== */
   .tag-adv { background: #fff1d6; color: #a05a00; }
   .tag-adv.done { background: #eef3ee; color: #5f7f69; }
@@ -1266,6 +1297,12 @@
     <button type="button" class="cancel-btn" id="copyClose">關閉</button>
   </div>
 </div>
+<button type="button" class="nav-fab" id="navFab" aria-label="功能選單：跳到想看的地方" aria-expanded="false" aria-controls="navSheet">☰</button>
+<div class="nav-backdrop hidden" id="navBackdrop"></div>
+<div class="nav-sheet hidden" id="navSheet" role="dialog" aria-label="功能選單">
+  <h3>想看哪裡？</h3>
+  <div id="navGroups"></div>
+</div>
 <div class="modal hidden" id="advModal" role="dialog" aria-modal="true" aria-labelledby="amTitle">
   <div class="modal-box">
     <h2 id="amTitle">代墊入帳</h2>
@@ -1508,6 +1545,56 @@
       drawCharts(); // 分頁顯示後才量得到寬度
     });
   });
+
+  // ===== 功能選單：照目前畫面上有的區塊列出，點了就切分頁、滑過去 =====
+  var NAV_PAGES = [["home", "首頁"], ["income", "收入"], ["expense", "支出"], ["manage", "管理"]];
+  function navSections(pageId) {
+    var page = $("page-" + pageId), out = [];
+    if (!page) return out;
+    Array.prototype.forEach.call(page.children, function (el) {
+      if (el.classList.contains("hidden")) return;
+      var name = "";
+      if (el.classList.contains("stat-fold")) name = "本月統計";
+      else if (el.classList.contains("card")) { var h = el.querySelector("h2"); name = h ? h.textContent.replace(/\s+/g, " ").trim() : ""; }
+      else if (el.classList.contains("summary")) name = "本月總覽";
+      if (name) out.push({ name: name, el: el });
+    });
+    return out;
+  }
+  function openNav() {
+    var box = $("navGroups"); box.innerHTML = "";
+    NAV_PAGES.forEach(function (pg) {
+      var secs = navSections(pg[0]); if (!secs.length) return;
+      var g = document.createElement("div"); g.className = "nav-group";
+      var t = document.createElement("p"); t.className = "ng-title"; t.textContent = pg[1]; g.appendChild(t);
+      var items = document.createElement("div"); items.className = "nav-items";
+      secs.forEach(function (sec) {
+        var b = document.createElement("button"); b.type = "button"; b.textContent = sec.name;
+        b.addEventListener("click", function () { closeNav(); goSection(pg[0], sec.el); });
+        items.appendChild(b);
+      });
+      g.appendChild(items); box.appendChild(g);
+    });
+    $("navSheet").classList.remove("hidden"); $("navBackdrop").classList.remove("hidden");
+    $("navFab").setAttribute("aria-expanded", "true"); $("navFab").textContent = "✕";
+  }
+  function closeNav() {
+    $("navSheet").classList.add("hidden"); $("navBackdrop").classList.add("hidden");
+    $("navFab").setAttribute("aria-expanded", "false"); $("navFab").textContent = "☰";
+  }
+  function goSection(pageId, el) {
+    var btn = document.querySelector('.tab-btn[data-page="' + pageId + '"]');
+    if (btn && !btn.classList.contains("active")) btn.click();
+    if (el.tagName === "DETAILS") el.open = true;
+    setTimeout(function () {
+      var tabs = document.querySelector(".tabs"), off = 12;
+      if (tabs && getComputedStyle(tabs).position === "sticky" && window.innerWidth <= 640) off += tabs.getBoundingClientRect().height;
+      window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - off, behavior: "smooth" });
+    }, 60);
+  }
+  $("navFab").addEventListener("click", function () { if ($("navSheet").classList.contains("hidden")) openNav(); else closeNav(); });
+  $("navBackdrop").addEventListener("click", closeNav);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("navSheet").classList.contains("hidden")) closeNav(); });
 
   // ===== 固定工資：到了發薪日自動記入 =====
   // 只在打開網頁時檢查（沒有伺服器），若當天沒打開，下次打開會補記。
