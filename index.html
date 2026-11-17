@@ -258,6 +258,12 @@
   body.theme-vehicle .quick-box { background: #eaf2fd; } body.theme-bow .quick-box { background: #f3eefc; }
   body.theme-bow .quick-box input { border-color: #e2d6f5; } body.theme-bow .quick-box input:focus { border-color: #c4b0ea; box-shadow: 0 0 0 4px #f1ebfc; }
   @media (prefers-reduced-motion: reduce) { .quick-filled { animation: none; } }
+  /* ===== 記帳本名稱：取過名字就收起來 ===== */
+  .name-compact { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-right: 34px; }
+  .name-compact .nc-title { font-size: 16px; font-weight: bold; }
+  .name-compact .link-btn { font-size: 14px; }
+  #nameCard.collapsed { padding-top: 14px; padding-bottom: 14px; }
+  #nameCard.collapsed .message:empty { display: none; }
   /* ===== 今日可用額度 ===== */
   .today-card { text-align: center; }
   .today-card .td-label { font-size: 16px; font-weight: bold; margin: 0; }
@@ -896,18 +902,21 @@
     <main>
       <!-- ===== 首頁 ===== -->
       <section class="page active" id="page-home">
-        <div class="card today-card hidden" id="todayCard">
-          <h2>💰 今日可用額度</h2>
-          <div id="todayBody"></div>
-        </div>
         <div class="budget-alert hidden" id="budgetAlertHome" role="status"></div>
-        <div class="card">
+        <div class="card" id="nameCard">
+          <div class="name-compact hidden" id="nameCompact"><span class="nc-title" id="nameCompactText"></span><button type="button" class="link-btn" id="nameEditBtn">✎ 改名稱</button></div>
+          <div id="nameFull">
           <h2><span class="icon" aria-hidden="true"><svg viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'><rect x='10' y='7' width='29' height='34' rx='5' fill='#ffdcb0' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><path d='M16 7 V41' stroke='#f2b67a' stroke-width='3'/><rect x='10' y='7' width='29' height='34' rx='5' fill='none' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><circle cx='23.0' cy='25' r='1.71' fill='#6b5048'/><circle cx='32.0' cy='25' r='1.71' fill='#6b5048'/><circle cx='23.54' cy='24.37' r='0.54' fill='#fff'/><circle cx='32.54' cy='24.37' r='0.54' fill='#fff'/><ellipse cx='19.85' cy='27.7' rx='2.16' ry='1.35' fill='#ff8fa3' opacity='.6'/><ellipse cx='35.15' cy='27.7' rx='2.16' ry='1.35' fill='#ff8fa3' opacity='.6'/><path d='M25.52 27.34 q1.9800000000000002 2.16 3.9600000000000004 0' stroke='#6b5048' stroke-width='1.35' fill='none' stroke-linecap='round'/></svg></span> 記帳本名稱</h2>
           <div class="field name-row">
             <input type="text" id="bookName" maxlength="30" placeholder="例如：菲菲的記帳本">
             <button type="button" class="small-btn" id="saveNameBtn">儲存名稱</button>
           </div>
+          </div>
           <div class="message" id="homeMessage"></div>
+        </div>
+        <div class="card today-card hidden" id="todayCard">
+          <h2>💰 今日可用額度</h2>
+          <div id="todayBody"></div>
         </div>
 
         <div class="summary">
@@ -2143,8 +2152,23 @@
 
   function payLabel(p) { return p === "card" ? "信用卡" : p === "cash" ? "現金" : "未標示"; }
 
+  var nameEditing = false;
+  function renderNameCard() {
+    var named = !!(settings.bookName && settings.bookName.trim());
+    var collapse = named && !nameEditing;
+    $("nameCard").classList.toggle("collapsed", collapse);
+    $("nameFull").classList.toggle("hidden", collapse);
+    $("nameCompact").classList.toggle("hidden", !collapse);
+    $("nameCompactText").textContent = "📒 " + (named ? settings.bookName.trim() : "");
+  }
+  $("nameEditBtn").addEventListener("click", function () {
+    nameEditing = true; renderNameCard();
+    $("homeMessage").textContent = ""; $("homeMessage").className = "message";
+    $("bookName").focus();
+  });
   function renderHome() {
     $("bookName").value = settings.bookName;
+    renderNameCard();
     var month = records.filter(inMonth);
     var inc = month.filter(function (r) { return r.type === "income"; });
     var exp = month.filter(function (r) { return r.type !== "income" && !r.advance; });
@@ -2362,6 +2386,7 @@
     newSettings.bookName = $("bookName").value.trim();
     if (!saveAll(records, newSettings)) { showMessage(msg, "名稱沒有存下來：瀏覽器無法保存資料，請稍後再試。", "error"); return; }
     settings = newSettings;
+    nameEditing = false;
     renderAll();
     renderPeople();
     showMessage(msg, "名稱已儲存。", "ok");
@@ -3193,6 +3218,7 @@
   }
   function switchProfile(id) {
     ["inc", "exp"].forEach(function (k) { var el = $(k + "Search"); if (el) el.value = ""; });
+    if (typeof nameEditing !== "undefined") nameEditing = false;
     if (id === currentId) return;
     if (editingIncomeId) endEditIncome();
     if (editingExpenseId) endEditExpense();
