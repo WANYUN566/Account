@@ -258,6 +258,23 @@
   body.theme-vehicle .quick-box { background: #eaf2fd; } body.theme-bow .quick-box { background: #f3eefc; }
   body.theme-bow .quick-box input { border-color: #e2d6f5; } body.theme-bow .quick-box input:focus { border-color: #c4b0ea; box-shadow: 0 0 0 4px #f1ebfc; }
   @media (prefers-reduced-motion: reduce) { .quick-filled { animation: none; } }
+  /* ===== 代墊款／待請款 ===== */
+  .tag-adv { background: #fff1d6; color: #a05a00; }
+  .tag-adv.done { background: #eef3ee; color: #5f7f69; }
+  td.amount.adv-amt { color: #b9a59a !important; }
+  #advWhoWrap { margin-top: 8px; }
+  .adv-sum { font-size: 15px; margin: 0 0 4px; }
+  .adv-sum b { color: #a05a00; }
+  .adv-who { font-size: 14px; color: #8a6e62; margin: 0 0 10px; }
+  .adv-row { display: grid; grid-template-columns: 26px 1fr auto; gap: 8px; align-items: center; padding: 10px 0; border-bottom: 2px dashed #f6e6dc; font-size: 15px; cursor: pointer; }
+  .adv-row:last-of-type { border-bottom: none; }
+  .adv-row input { width: 20px; height: 20px; accent-color: #e85a7a; }
+  .adv-row .ad-sub { font-size: 13px; color: #8a7a72; }
+  .adv-row .ad-amt { font-weight: bold; white-space: nowrap; }
+  .adv-tools { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  #advModal .modal-box { max-width: 400px; }
+  #advModal .am-note { font-size: 14px; color: #8a6e62; line-height: 1.6; margin: 8px 0 14px; white-space: pre-line; }
+  body[class*="theme-"] .adv-row { border-bottom-color: rgba(0,0,0,.07); }
   /* ===== 修改每月固定金額 ===== */
   .plan-act .edit-btn { margin: 0 6px 6px 0; }
   #planEditModal .modal-box { max-width: 380px; }
@@ -1064,6 +1081,14 @@
                 <p class="list-note" style="margin:6px 0 0;">勾選後，第 1 期記在上面的日期，之後每個月同一天打開記帳本時自動記入一期，記滿就停。</p>
               </div>
               <div class="field-wide inst-preview hidden" id="instPreview"></div>
+              <div class="field field-wide" id="advField">
+                <label class="check-line"><input type="checkbox" id="advOn"> 💼 這筆是代墊（待請款）</label>
+                <p class="list-note" style="margin:6px 0 0;">幫公司或朋友先付的錢，不算進自己的花費。拿回來時，到下面的「待請款」按入帳。</p>
+                <div class="hidden" id="advWhoWrap">
+                  <label class="title" for="advWho">幫誰墊的（可不填）</label>
+                  <input type="text" id="advWho" maxlength="12" placeholder="例如：公司、小美">
+                </div>
+              </div>
             </div>
             <p class="save-hint">填寫完成後，按下儲存，就會出現在下方明細。</p>
             <button type="submit" class="save-btn" id="expSubmit">儲存</button>
@@ -1083,6 +1108,15 @@
               <tbody id="expenseList"></tbody>
             </table>
           </div>
+        </div>
+
+        <div class="card hidden" id="advCard">
+          <h2>💼 待請款</h2>
+          <p class="adv-sum" id="advSum"></p>
+          <p class="adv-who" id="advWhoLine"></p>
+          <div id="advList"></div>
+          <div class="adv-tools"><button type="button" class="link-btn" id="advAll">全選</button><button type="button" class="small-btn" id="advSettle">勾選的入帳了</button></div>
+          <div class="message" id="advMessage"></div>
         </div>
 
         <div class="card" id="budgetCard">
@@ -1230,6 +1264,20 @@
     <p class="confirm-text">這個瀏覽器不讓記帳本自動複製。<br>請在下面的框框裡<b>長按 →「全選」→「拷貝」</b>，再用瀏覽器打開記帳本，到「管理」頁按「貼上備份文字」。</p>
     <textarea class="backup-text" id="copyText" readonly></textarea>
     <button type="button" class="cancel-btn" id="copyClose">關閉</button>
+  </div>
+</div>
+<div class="modal hidden" id="advModal" role="dialog" aria-modal="true" aria-labelledby="amTitle">
+  <div class="modal-box">
+    <h2 id="amTitle">代墊入帳</h2>
+    <p class="am-note" id="amPicked"></p>
+    <div class="field">
+      <label class="title" for="amGot">實際拿回多少（元）</label>
+      <input type="number" id="amGot" min="0" step="1" inputmode="numeric">
+    </div>
+    <p class="am-note" id="amNote"></p>
+    <div class="message" id="amMsg"></div>
+    <button type="button" class="save-btn" id="amSave">入帳</button>
+    <button type="button" class="cancel-btn" id="amCancel">取消</button>
   </div>
 </div>
 <div class="modal hidden" id="planEditModal" role="dialog" aria-modal="true" aria-labelledby="peTitle">
@@ -1537,6 +1585,101 @@
     });
   }
 
+  // ===== 代墊款／待請款 =====
+  function updateAdvUI() {
+    var block = isNewInstallment() || isNewRecurring() || (canInstall($("expCategory").value) && pillValue("inst") === "yes");
+    $("advField").classList.toggle("hidden", block);
+    if (block) $("advOn").checked = false;
+    $("advWhoWrap").classList.toggle("hidden", !$("advOn").checked);
+  }
+  $("expenseForm").addEventListener("change", updateAdvUI);
+  function pendingAdvances() { return records.filter(function (r) { return r.type !== "income" && r.advance && r.advance.status !== "settled"; }); }
+  function renderAdvances() {
+    var card = $("advCard"); if (!card) return;
+    var list = sortNewest(pendingAdvances()), box = $("advList");
+    var keep = {}; box.querySelectorAll("input:checked").forEach(function (c) { keep[c.value] = 1; });
+    card.classList.toggle("hidden", !list.length);
+    if (!list.length) { box.innerHTML = ""; return; }
+    var total = round2(list.reduce(function (a, r) { return a + r.amount; }, 0)), by = {}, order = [];
+    list.forEach(function (r) { var k = r.advance.to || "（沒填對象）"; if (!by[k]) { by[k] = { n: 0, sum: 0 }; order.push(k); } by[k].n++; by[k].sum += r.amount; });
+    $("advSum").innerHTML = ""; $("advSum").appendChild(document.createTextNode("還沒拿回來："));
+    var b = document.createElement("b"); b.textContent = list.length + " 筆，共 " + formatMoney(total) + " 元"; $("advSum").appendChild(b);
+    $("advWhoLine").textContent = order.map(function (k) { return k + " " + by[k].n + " 筆 " + formatMoney(round2(by[k].sum)) + " 元"; }).join("・");
+    box.innerHTML = "";
+    list.forEach(function (r) {
+      var row = document.createElement("label"); row.className = "adv-row";
+      row.innerHTML = '<input type="checkbox"><div><div class="ad-main"></div><div class="ad-sub"></div></div><span class="ad-amt"></span>';
+      var cb = row.querySelector("input"); cb.value = String(r.id); cb.checked = !!keep[String(r.id)];
+      row.querySelector(".ad-main").textContent = (r.advance.to ? r.advance.to + "・" : "") + (r.note || r.category);
+      row.querySelector(".ad-sub").textContent = r.date + "・" + r.category + "・" + payLabel(r.payment);
+      row.querySelector(".ad-amt").textContent = formatMoney(r.amount) + " 元";
+      box.appendChild(row);
+    });
+  }
+  var advPicked = [];
+  function advSelected() {
+    var ids = {}; $("advList").querySelectorAll("input:checked").forEach(function (c) { ids[c.value] = 1; });
+    return pendingAdvances().filter(function (r) { return ids[String(r.id)]; });
+  }
+  function updateAmNote() {
+    var total = round2(advPicked.reduce(function (a, r) { return a + r.amount; }, 0)), got = Number($("amGot").value), note = $("amNote");
+    if ($("amGot").value === "" || isNaN(got)) { note.textContent = ""; return; }
+    var diff = round2(total - got);
+    if (diff > 0) {
+      var cats = {}; advPicked.forEach(function (r) { cats[r.category] = 1; });
+      var cat = Object.keys(cats).length === 1 ? advPicked[0].category : "其他";
+      note.textContent = "沒拿回的 " + formatMoney(diff) + " 元，會記成你自己的支出（分類：" + cat + "，日期：今天）。";
+    } else if (diff < 0) note.textContent = "拿回的比墊出去的多 " + formatMoney(-diff) + " 元。多出來的部分不會自動記，需要的話請另外記成收入。";
+    else note.textContent = "全部拿回來了，這幾筆會結清。";
+  }
+  $("advAll").addEventListener("click", function () {
+    var boxes = $("advList").querySelectorAll("input"), allOn = Array.prototype.every.call(boxes, function (c) { return c.checked; });
+    boxes.forEach(function (c) { c.checked = !allOn; });
+    $("advAll").textContent = allOn ? "全選" : "全部取消";
+  });
+  $("advSettle").addEventListener("click", function () {
+    advPicked = advSelected();
+    if (!advPicked.length) { showMessage($("advMessage"), "請先勾選拿回來的那幾筆。", "error"); return; }
+    $("advMessage").textContent = ""; $("advMessage").className = "message";
+    var total = round2(advPicked.reduce(function (a, r) { return a + r.amount; }, 0));
+    $("amPicked").textContent = "勾選了 " + advPicked.length + " 筆，共 " + formatMoney(total) + " 元。\n" + advPicked.map(function (r) { return "・" + (r.note || r.category) + " " + formatMoney(r.amount) + " 元"; }).join("\n");
+    $("amGot").value = privacyOn ? "" : total; $("amGot").placeholder = String(total);
+    $("amMsg").textContent = ""; $("amMsg").className = "message";
+    updateAmNote();
+    $("advModal").classList.remove("hidden");
+  });
+  $("amGot").addEventListener("input", function () { $("amMsg").textContent = ""; $("amMsg").className = "message"; updateAmNote(); });
+  $("amCancel").addEventListener("click", function () { $("advModal").classList.add("hidden"); });
+  $("amSave").addEventListener("click", function () {
+    var msg = $("amMsg");
+    if (loadFailed) { showMessage(msg, LOAD_ERROR_TEXT, "error"); return; }
+    var raw = $("amGot").value.trim(), got = Number(raw);
+    if (raw === "" || isNaN(got) || got < 0 || Math.floor(got) !== got) { showMessage(msg, "請填實際拿回的金額（0 或以上的整數）。", "error"); return; }
+    var total = round2(advPicked.reduce(function (a, r) { return a + r.amount; }, 0)), diff = round2(total - got), today = todayString();
+    var ids = {}; advPicked.forEach(function (r) { ids[r.id] = 1; });
+    var batch = newId();
+    var newRecords = records.map(function (r) {
+      if (!ids[r.id]) return r;
+      var c = clone(r); c.advance.status = "settled"; c.advance.settledAt = today; c.advance.batch = batch; c.advance.batchGot = got; return c;
+    });
+    var cats = {}; advPicked.forEach(function (r) { cats[r.category] = 1; });
+    var who = {}; advPicked.forEach(function (r) { if (r.advance.to) who[r.advance.to] = 1; });
+    if (diff > 0) {
+      var cat = Object.keys(cats).length === 1 ? advPicked[0].category : "其他";
+      var loss = { id: newId(), date: today, type: "expense", category: cat, payment: advPicked[0].payment, amount: diff,
+                   note: "代墊沒拿回的部分" + (Object.keys(who).length ? "（" + Object.keys(who).join("、") + "）" : ""), advanceLoss: batch };
+      if (canInstall(cat)) loss.installment = 0;
+      newRecords.push(loss);
+    }
+    if (!saveAll(newRecords, settings)) { showMessage(msg, "沒有入帳成功：瀏覽器無法保存資料，請稍後再試。", "error"); return; }
+    records = newRecords;
+    $("advModal").classList.add("hidden");
+    renderAll();
+    showMessage($("advMessage"), "已入帳 " + advPicked.length + " 筆（拿回 " + formatMoney(got) + " 元）。" +
+      (diff > 0 ? "沒拿回的 " + formatMoney(diff) + " 元已記成你自己的支出。" : diff < 0 ? "多拿回的 " + formatMoney(-diff) + " 元需要的話請另外記成收入。" : ""), "ok");
+    advPicked = [];
+  });
+
   // ===== 修改每月固定金額：從下一次開始，已記入的不變 =====
   var editingPlanId = null;
   function openPlanEdit(id) {
@@ -1619,6 +1762,7 @@
     renderMonthBar(); relabelMonth(); renderFuture();
     checkBackupReminder();
     renderYearReport();
+    if (typeof renderAdvances === "function") renderAdvances();
     if (typeof fitSoon === "function") fitSoon();
     drawCharts();
     renderTrash(); renderPersonTrash();
@@ -1821,7 +1965,7 @@
   }
   function drawCharts() {
     var months = lastMonths(6);
-    var isInc = function (r) { return r.type === "income"; }, isExp = function (r) { return r.type !== "income"; };
+    var isInc = function (r) { return r.type === "income"; }, isExp = function (r) { return r.type !== "income" && !r.advance; };
     drawColumns($("homeTrendChart"), months, [
       { name: "收入", color: COLOR.income, values: monthSums(isInc) },
       { name: "支出", color: COLOR.expense, values: monthSums(isExp) }
@@ -1844,7 +1988,7 @@
     $("bookName").value = settings.bookName;
     var month = records.filter(inMonth);
     var inc = month.filter(function (r) { return r.type === "income"; });
-    var exp = month.filter(function (r) { return r.type !== "income"; });
+    var exp = month.filter(function (r) { return r.type !== "income" && !r.advance; });
     var incSum = inc.reduce(function (a, r) { return a + r.amount; }, 0);
     var expSum = exp.reduce(function (a, r) { return a + r.amount; }, 0);
     $("homeIncome").textContent = formatMoney(incSum);
@@ -1852,7 +1996,7 @@
     $("homeBalance").textContent = formatMoney(incSum - expSum);
 
     var allInc = 0, allExp = 0;
-    records.forEach(function (r) { if (r.type === "income") allInc += r.amount; else allExp += r.amount; });
+    records.forEach(function (r) { if (r.type === "income") allInc += r.amount; else if (!r.advance) allExp += r.amount; });
     $("allTimeLine").textContent = "全部紀錄累計：收入 " + formatMoney(allInc) + " 元・支出 " + formatMoney(allExp) + " 元・餘額 " + formatMoney(allInc - allExp) + " 元";
 
     drawPaySplit($("homePayBreakdown"), exp, expSum);
@@ -1931,7 +2075,7 @@
   }
 
   function renderExpense() {
-    var month = records.filter(function (r) { return r.type !== "income" && inMonth(r); });
+    var month = records.filter(function (r) { return r.type !== "income" && !r.advance && inMonth(r); });
     var card = 0, cash = 0, none = 0;
     month.forEach(function (r) {
       if (r.payment === "card") card += r.amount; else if (r.payment === "cash") cash += r.amount; else none += r.amount;
@@ -1968,6 +2112,10 @@
       else if (r.installment) addTag(tr.children[3], "分期 " + r.installment + " 期", "tag-inst");
       if (r.recurring) addTag(tr.children[3], "每月固定", "tag-inst");
       if (r.auto) addTag(tr.children[3], "自動記入", "tag-auto");
+      if (r.advance) {
+        addTag(tr.children[3], r.advance.status === "settled" ? "代墊・已入帳" : "代墊・待請款" + (r.advance.to ? "（" + r.advance.to + "）" : ""), "tag-adv" + (r.advance.status === "settled" ? " done" : ""));
+        tr.children[4].classList.add("adv-amt");
+      }
       if (r.interest > 0) addTag(tr.children[3], "每期利息 " + formatMoney(r.interest) + " 元", "tag-none");
       else if (canInstall(r.category) && r.installment === 0) addTag(tr.children[3], "不分期", "tag-none");
       if (r.note) tr.children[3].appendChild(document.createTextNode(r.note));
@@ -2267,6 +2415,7 @@
     updateInstUI();
     $("expAmount").value = r.amount;
     $("expItem").value = r.note || "";
+    $("advOn").checked = !!r.advance; $("advWho").value = r.advance && r.advance.to ? r.advance.to : ""; updateAdvUI();
     $("expFormTitle").textContent = "修改這筆支出";
     $("expSubmit").textContent = "儲存修改";
     $("expCancel").classList.remove("hidden");
@@ -2283,6 +2432,7 @@
     $("expDate").value = todayString();
     $("expAmount").value = ""; $("instPeriods").value = ""; $("expItem").value = "";
     $("instInterest").value = ""; $("instAuto").checked = false; $("recurAuto").checked = false;
+    $("advOn").checked = false; $("advWho").value = "";
     setPill("inst", "no");
     updateInstUI();
     $("expFormTitle").textContent = "記下一筆支出";
@@ -2313,7 +2463,11 @@
     if (item) rec.note = item;
     var amount = readAmount($("expAmount"), msg); if (amount === null) return;
     rec.amount = amount;
-
+    if ($("advOn").checked && !isNewInstallment() && !isNewRecurring()) {
+      var prevAdv = editingExpenseId && findRecord(editingExpenseId) ? findRecord(editingExpenseId).advance : null;
+      rec.advance = prevAdv ? clone(prevAdv) : { status: "pending" };
+      rec.advance.to = $("advWho").value.trim();
+    }
     if (editingExpenseId) {
       // 保留自動分期紀錄的期數資訊
       var orig = findRecord(editingExpenseId);
@@ -2379,7 +2533,9 @@
     }
     if (addRecord(rec, msg)) {
       $("expAmount").value = ""; $("expItem").value = ""; $("expAmount").focus();
-      var warn = String(rec.date).slice(0, 7) === viewMonth ? budgetWarnAfter(rec.category) : "";
+      if (rec.advance) showMessage(msg, "記好了。這筆是代墊，不算進自己的花費，記在下面的「待請款」。", "ok");
+      $("advOn").checked = false; $("advWho").value = ""; updateAdvUI();
+      var warn = !rec.advance && String(rec.date).slice(0, 7) === viewMonth ? budgetWarnAfter(rec.category) : "";
       if (warn) showMessage(msg, "記好了。\n" + warn, "warn");
     }
   });
@@ -2387,7 +2543,7 @@
   // ===== 每月預算 =====
   var BUDGET_WARN = 0.8; // 用到 80% 就提醒
   function monthExpenseBy(cat) {
-    return records.filter(function (r) { return r.type !== "income" && inMonth(r) && (!cat || r.category === cat); })
+    return records.filter(function (r) { return r.type !== "income" && !r.advance && inMonth(r) && (!cat || r.category === cat); })
                   .reduce(function (a, r) { return a + r.amount; }, 0);
   }
   // 列出本月每一項預算的使用情況
@@ -2484,7 +2640,7 @@
     var inc = 0, exp = 0;
     records.forEach(function (r) {
       if (String(r.date).slice(0, prefix.length) !== prefix) return;
-      if (r.type === "income") inc += r.amount; else exp += r.amount;
+      if (r.type === "income") inc += r.amount; else if (!r.advance) exp += r.amount;
     });
     return round2(inc - exp);
   }
@@ -2743,7 +2899,7 @@
     var lastYm = prevMonth(ym);
     var mon = records.filter(inMonth);
     var inc = sumOf(mon.filter(function (r) { return r.type === "income"; }));
-    var expList = mon.filter(function (r) { return r.type !== "income"; });
+    var expList = mon.filter(function (r) { return r.type !== "income" && !r.advance; });
     var exp = sumOf(expList);
 
     if (!records.length) {
@@ -2767,7 +2923,7 @@
 
     // 3. 跟上個月同期比（上個月 1 號到同一天）
     var lastSame = records.filter(function (r) {
-      return r.type !== "income" && String(r.date).slice(0, 7) === lastYm && parseInt(String(r.date).slice(8, 10), 10) <= dayNo;
+      return r.type !== "income" && !r.advance && String(r.date).slice(0, 7) === lastYm && parseInt(String(r.date).slice(8, 10), 10) <= dayNo;
     });
     var lastExp = sumOf(lastSame);
     if (lastExp > 0 && exp > 0) {
@@ -3784,7 +3940,7 @@
     var data = years.map(function (y) {
       var from = y + "-01-01", to = y + "-" + md, total = 0, cats = {}, n = 0;
       records.forEach(function (r) {
-        if (r.type === "income") return;
+        if (r.type === "income" || r.advance) return;
         var d = String(r.date);
         if (d < from || d > to) return;
         total += r.amount; n++; cats[r.category] = (cats[r.category] || 0) + r.amount;
