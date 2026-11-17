@@ -258,6 +258,17 @@
   body.theme-vehicle .quick-box { background: #eaf2fd; } body.theme-bow .quick-box { background: #f3eefc; }
   body.theme-bow .quick-box input { border-color: #e2d6f5; } body.theme-bow .quick-box input:focus { border-color: #c4b0ea; box-shadow: 0 0 0 4px #f1ebfc; }
   @media (prefers-reduced-motion: reduce) { .quick-filled { animation: none; } }
+  /* ===== 今日可用額度 ===== */
+  .today-card { text-align: center; }
+  .today-card .td-label { font-size: 16px; font-weight: bold; margin: 0; }
+  .today-card .td-big { font-size: 40px; font-weight: bold; color: #2f9a66; line-height: 1.3; margin: 4px 0; white-space: nowrap; }
+  .today-card .td-big.over { color: #e0505f; }
+  .today-card .td-line { font-size: 14px; color: #8a6e62; margin: 2px 0; }
+  .today-card .td-warn { font-size: 14px; color: #e0505f; font-weight: bold; margin: 6px 0 0; }
+  .today-card .td-detail { border-top: 2px dashed #f6e6dc; margin-top: 12px; padding-top: 10px; font-size: 13px; color: #8a7a72; line-height: 1.8; }
+  .today-card .td-empty { font-size: 15px; color: #8a6e62; margin: 8px 0 12px; }
+  body.theme-bow .today-card .td-big:not(.over) { color: #7a5fb5; }
+  body[class*="theme-"] .today-card .td-detail { border-top-color: rgba(0,0,0,.07); }
   /* ===== 功能選單（右下角 ☰） ===== */
   .nav-fab {
     position: fixed; right: 16px; bottom: calc(18px + env(safe-area-inset-bottom)); z-index: 15;
@@ -885,6 +896,10 @@
     <main>
       <!-- ===== 首頁 ===== -->
       <section class="page active" id="page-home">
+        <div class="card today-card hidden" id="todayCard">
+          <h2>💰 今日可用額度</h2>
+          <div id="todayBody"></div>
+        </div>
         <div class="budget-alert hidden" id="budgetAlertHome" role="status"></div>
         <div class="card">
           <h2><span class="icon" aria-hidden="true"><svg viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'><rect x='10' y='7' width='29' height='34' rx='5' fill='#ffdcb0' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><path d='M16 7 V41' stroke='#f2b67a' stroke-width='3'/><rect x='10' y='7' width='29' height='34' rx='5' fill='none' stroke='#6b5048' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/><circle cx='23.0' cy='25' r='1.71' fill='#6b5048'/><circle cx='32.0' cy='25' r='1.71' fill='#6b5048'/><circle cx='23.54' cy='24.37' r='0.54' fill='#fff'/><circle cx='32.54' cy='24.37' r='0.54' fill='#fff'/><ellipse cx='19.85' cy='27.7' rx='2.16' ry='1.35' fill='#ff8fa3' opacity='.6'/><ellipse cx='35.15' cy='27.7' rx='2.16' ry='1.35' fill='#ff8fa3' opacity='.6'/><path d='M25.52 27.34 q1.9800000000000002 2.16 3.9600000000000004 0' stroke='#6b5048' stroke-width='1.35' fill='none' stroke-linecap='round'/></svg></span> 記帳本名稱</h2>
@@ -1546,6 +1561,62 @@
     });
   });
 
+  // ===== 今日可用額度 =====
+  // 每天的額度 =（每月預算 − 今天以前已經花的 − 這個月還沒扣的固定支出和分期）÷ 這個月還剩幾天（含今天）
+  function upcomingPlansThisMonth() {
+    var today = todayString(), ym = today.slice(0, 7), list = [];
+    settings.plans.forEach(function (pl) {
+      if (!pl.active) return;
+      for (var k = pl.added + 1; pl.recurring || k <= pl.periods; k++) {
+        var d = planDate(pl, k);
+        if (d.slice(0, 7) > ym) break;
+        if (d.slice(0, 7) === ym && d > today) list.push({ name: pl.note || pl.category, date: d, amount: pl.per });
+        if (k > pl.added + 40) break;
+      }
+    });
+    return list;
+  }
+  function renderToday() {
+    var card = $("todayCard"), body = $("todayBody");
+    if (!card) return;
+    if (!viewingCurrent()) { card.classList.add("hidden"); return; }
+    card.classList.remove("hidden");
+    var budget = settings.budget && settings.budget.total > 0 ? settings.budget.total : 0;
+    body.innerHTML = "";
+    if (!budget) {
+      var e = document.createElement("p"); e.className = "td-empty"; e.textContent = "設定每月預算之後，這裡會告訴你今天還可以花多少。";
+      var go = document.createElement("button"); go.type = "button"; go.className = "small-btn"; go.textContent = "去設定";
+      go.addEventListener("click", function () { goSection("expense", $("budgetCard")); setTimeout(function () { $("budgetTotal").focus(); }, 500); });
+      body.appendChild(e); body.appendChild(go); return;
+    }
+    var today = todayString(), ym = today.slice(0, 7);
+    var monthSpend = records.filter(function (r) { return r.type !== "income" && !r.advance && String(r.date).slice(0, 7) === ym; });
+    var before = round2(monthSpend.filter(function (r) { return r.date < today; }).reduce(function (a, r) { return a + r.amount; }, 0));
+    var todaySpent = round2(monthSpend.filter(function (r) { return r.date === today; }).reduce(function (a, r) { return a + r.amount; }, 0));
+    var upcoming = upcomingPlansThisMonth(), upSum = round2(upcoming.reduce(function (a, u) { return a + u.amount; }, 0));
+    var daysLeft = daysInMonth(ym) - parseInt(today.slice(8, 10), 10) + 1;
+    var pool = round2(budget - before - upSum);
+    var daily = Math.floor(pool / daysLeft), left = round2(daily - todaySpent);
+    var add = function (cls, text) { var el = document.createElement(cls === "td-big" || cls === "td-big over" ? "div" : "p"); el.className = cls; el.textContent = text; body.appendChild(el); return el; };
+    if (pool - todaySpent <= 0) {
+      add("td-label", "這個月的預算");
+      add("td-big over", "已經用完了");
+      var over = round2(before + todaySpent + upSum - budget);
+      add("td-warn", over > 0 ? "已經超支 " + formatMoney(over) + " 元（含還沒扣的固定支出）" : "剛好用完，接下來的每一筆都會超支");
+    } else {
+      add("td-label", "今天還可以花");
+      add("td-big" + (left < 0 ? " over" : ""), (left < 0 && !privacyOn ? "-" : "") + formatMoney(Math.abs(left)) + " 元");
+      add("td-line", "今天的額度 " + formatMoney(daily) + "・今天已花 " + formatMoney(todaySpent));
+      if (left < 0) add("td-warn", "今天超支 " + formatMoney(-left) + " 元，之後每天的額度會自動少一點");
+    }
+    var d = document.createElement("div"); d.className = "td-detail";
+    d.textContent = "本月預算 " + formatMoney(budget) + "・今天以前已花 " + formatMoney(before) +
+      (upcoming.length ? "\n還沒扣的固定支出 " + formatMoney(upSum) + "（" + upcoming.map(function (u) { return u.name + " " + parseInt(u.date.slice(5, 7), 10) + "/" + parseInt(u.date.slice(8, 10), 10); }).join("、") + "）" : "") +
+      "\n這個月還剩 " + daysLeft + " 天（含今天）";
+    d.style.whiteSpace = "pre-line";
+    body.appendChild(d);
+  }
+
   // ===== 功能選單：照目前畫面上有的區塊列出，點了就切分頁、滑過去 =====
   var NAV_PAGES = [["home", "首頁"], ["income", "收入"], ["expense", "支出"], ["manage", "管理"]];
   function navSections(pageId) {
@@ -1850,6 +1921,7 @@
     checkBackupReminder();
     renderYearReport();
     if (typeof renderAdvances === "function") renderAdvances();
+    if (typeof renderToday === "function") renderToday();
     if (typeof fitSoon === "function") fitSoon();
     drawCharts();
     renderTrash(); renderPersonTrash();
