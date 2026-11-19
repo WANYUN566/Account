@@ -284,11 +284,12 @@
   /* ===== 功能選單（右下角 ☰） ===== */
   .nav-fab {
     position: fixed; right: 16px; bottom: calc(18px + env(safe-area-inset-bottom)); z-index: 15;
-    width: 56px; height: 56px; border-radius: 50%; border: none; cursor: pointer;
-    background: #e85a7a; color: #fff; font-size: 26px; line-height: 56px; padding: 0;
+    width: 48px; height: 48px; border-radius: 50%; border: none; cursor: pointer;
+    background: #e85a7a; color: #fff; font-size: 22px; line-height: 48px; padding: 0; transition: opacity .25s;
     box-shadow: 0 4px 0 #c4405f, 0 6px 16px rgba(90,74,66,.25); font-family: inherit;
   }
   .nav-fab:active { transform: translateY(2px); box-shadow: 0 2px 0 #c4405f; }
+  .nav-fab.scrolling { opacity: .35; }
   .nav-backdrop { position: fixed; inset: 0; background: rgba(90,74,66,.3); z-index: 13; }
   .nav-sheet {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 14; max-height: 72vh; overflow-y: auto;
@@ -1145,6 +1146,7 @@
               <div class="field field-wide" id="advField">
                 <label class="check-line"><input type="checkbox" id="advOn"> 💼 這筆是代墊（待請款）</label>
                 <p class="list-note" style="margin:6px 0 0;">幫公司或朋友先付的錢，不算進自己的花費。拿回來時，到下面的「待請款」按入帳。</p>
+                <p class="hidden" id="advSettledNote" style="margin:6px 0 0;color:#a05a00;font-size:13px;line-height:1.6;">這筆代墊已經入帳，不能改成一般支出；修改金額也不會重新計算當時的差額。真的記錯的話，請刪掉後重記。</p>
                 <div class="hidden" id="advWhoWrap">
                   <label class="title" for="advWho">幫誰墊的（可不填）</label>
                   <input type="text" id="advWho" maxlength="12" placeholder="例如：公司、小美">
@@ -1680,6 +1682,15 @@
   }
   $("navFab").addEventListener("click", function () { if ($("navSheet").classList.contains("hidden")) openNav(); else closeNav(); });
   $("navBackdrop").addEventListener("click", closeNav);
+  // 滑動時把 ☰ 變淡，不擋住卡片內容；停下來 0.6 秒後恢復
+  (function () {
+    var t = null, fab = $("navFab");
+    window.addEventListener("scroll", function () {
+      if (!$("navSheet").classList.contains("hidden")) return;
+      fab.classList.add("scrolling"); clearTimeout(t);
+      t = setTimeout(function () { fab.classList.remove("scrolling"); }, 600);
+    }, { passive: true });
+  })();
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("navSheet").classList.contains("hidden")) closeNav(); });
 
   // ===== 固定工資：到了發薪日自動記入 =====
@@ -1762,7 +1773,7 @@
   function updateAdvUI() {
     var block = isNewInstallment() || isNewRecurring() || (canInstall($("expCategory").value) && pillValue("inst") === "yes");
     $("advField").classList.toggle("hidden", block);
-    if (block) $("advOn").checked = false;
+    if (block && !$("advOn").disabled) $("advOn").checked = false;
     $("advWhoWrap").classList.toggle("hidden", !$("advOn").checked);
   }
   $("expenseForm").addEventListener("change", updateAdvUI);
@@ -2321,10 +2332,14 @@
     var target = records.filter(function (r) { return r.id === id; })[0];
     if (!target) return;
     var detail = target.date + "　" + (target.type === "income" ? "收入" : "支出") + "　" + target.category + "　" + formatMoney(target.amount) + " 元" + (target.note ? "\n" + target.note : "");
-    askConfirm({ title: "要刪除這筆紀錄嗎？", text: detail + "\n\n刪除後會移到「管理」頁，30 天內可以復原。", okText: "刪除", danger: true }, function () {
-      var newRecords = records.filter(function (r) { return r.id !== id; });
+    // 已入帳的代墊：入帳時若自動補記了差額，問要不要一起刪
+    var loss = target.advance && target.advance.batch ? records.filter(function (r) { return r.advanceLoss && r.advanceLoss === target.advance.batch; })[0] : null;
+    var doDelete = function (withLoss) {
+      var ids = {}; ids[id] = 1; if (withLoss && loss) ids[loss.id] = 1;
+      var newRecords = records.filter(function (r) { return !ids[r.id]; });
       var newSettings = clone(settings);
       newSettings.trash.push({ id: newId(), deletedAt: todayString(), rec: clone(target) });
+      if (withLoss && loss) newSettings.trash.push({ id: newId(), deletedAt: todayString(), rec: clone(loss) });
       if (!saveAll(newRecords, newSettings)) {
         showMessage(msgEl, "沒有刪除成功：瀏覽器無法保存資料，這筆紀錄還在，請稍後再試。", "error");
         return;
@@ -2333,7 +2348,15 @@
       if (id === editingIncomeId) endEditIncome();
       if (id === editingExpenseId) endEditExpense();
       renderAll();
-      showMessage(msgEl, "已刪除這筆紀錄。30 天內可以到「管理」頁復原。", "ok");
+      showMessage(msgEl, (withLoss && loss ? "已刪除這筆代墊，和入帳時補記的差額 " + formatMoney(loss.amount) + " 元。" : "已刪除這筆紀錄。") + "30 天內可以到「管理」頁復原。", "ok");
+    };
+    askConfirm({ title: "要刪除這筆紀錄嗎？", text: detail + "\n\n刪除後會移到「管理」頁，30 天內可以復原。", okText: "刪除", danger: true }, function () {
+      if (!loss) { doDelete(false); return; }
+      setTimeout(function () {
+        askConfirm({ title: "差額要一起刪掉嗎？", text: "這筆代墊入帳時，自動補記了一筆「" + (loss.note || "沒拿回的部分") + "」" + formatMoney(loss.amount) + " 元。\n\n如果這筆代墊是記錯的，通常要一起刪掉，才不會多算。",
+                     okText: "一起刪掉", cancelText: "只刪這筆代墊", danger: true },
+                   function () { doDelete(true); }, function () { doDelete(false); });
+      }, 0);
     });
   }
 
@@ -2605,7 +2628,11 @@
     updateInstUI();
     $("expAmount").value = r.amount;
     $("expItem").value = r.note || "";
-    $("advOn").checked = !!r.advance; $("advWho").value = r.advance && r.advance.to ? r.advance.to : ""; updateAdvUI();
+    $("advOn").checked = !!r.advance; $("advWho").value = r.advance && r.advance.to ? r.advance.to : "";
+    var settled = !!(r.advance && r.advance.status === "settled");
+    $("advOn").disabled = settled;
+    $("advSettledNote").classList.toggle("hidden", !settled);
+    updateAdvUI();
     $("expFormTitle").textContent = "修改這筆支出";
     $("expSubmit").textContent = "儲存修改";
     $("expCancel").classList.remove("hidden");
@@ -2622,7 +2649,7 @@
     $("expDate").value = todayString();
     $("expAmount").value = ""; $("instPeriods").value = ""; $("expItem").value = "";
     $("instInterest").value = ""; $("instAuto").checked = false; $("recurAuto").checked = false;
-    $("advOn").checked = false; $("advWho").value = "";
+    $("advOn").checked = false; $("advWho").value = ""; $("advOn").disabled = false; $("advSettledNote").classList.add("hidden");
     setPill("inst", "no");
     updateInstUI();
     $("expFormTitle").textContent = "記下一筆支出";
