@@ -110,6 +110,8 @@
   .slide .frame img { border-radius: 12px; }
   .slide img { width: 100%; height: auto; display: block; }
   .slide .frame.bottom { justify-content: flex-end; padding-bottom: 0; }
+  .slide .frame.top { justify-content: flex-start; padding-top: 0; }
+  .slide .frame.top img { border-radius: 0 0 12px 12px; }
   .slide .frame.bottom img { border-radius: 12px 12px 0 0; }
   .slide figcaption { margin-top: 8px; font-size: 15px; }
   .slide figcaption .n { display: inline-block; width: 24px; height: 24px; line-height: 24px; text-align: center; border-radius: 50%; background: var(--pink); color: #fff; font-size: 14px; margin-right: 6px; }
@@ -269,11 +271,11 @@
     <p class="note">下面都是記帳本的真實畫面，名字和金額是示範用的假資料。</p>
     <div class="slider">
       <div class="track" id="track">
-        <figure class="slide"><div class="frame"><img src="img/s1.jpg" alt="記下一筆支出的表單" loading="lazy"></div><figcaption><span class="n">1</span>記下一筆<small>選分類、付款方式，填金額就好</small></figcaption></figure>
-        <figure class="slide"><div class="frame"><img src="img/s2.jpg" alt="支出明細列表" loading="lazy"></div><figcaption><span class="n">2</span>每一筆都清清楚楚<small>記錯了可以修改，刪除前會再確認</small></figcaption></figure>
-        <figure class="slide"><div class="frame bottom"><img src="img/s3.jpg" alt="本月統計與支出分類" loading="lazy"></div><figcaption><span class="n">3</span>錢花到哪一目了然<small>支出分類由多到少排好</small></figcaption></figure>
-        <figure class="slide"><div class="frame"><img src="img/s4.jpg" alt="財務小提醒" loading="lazy"></div><figcaption><span class="n">4</span>財務小提醒<small>自動整理這個月的變化</small></figcaption></figure>
-        <figure class="slide"><div class="frame"><img src="img/s5.jpg" alt="備份匯出與匯入" loading="lazy"></div><figcaption><span class="n">5</span>備份帶著走<small>換手機時匯入備份就能找回來</small></figcaption></figure>
+        <figure class="slide"><div class="frame"><img src="img/s1.jpg" alt="記帳本首頁的今日可用額度：今天還可以花 1,373 元" loading="lazy"></div><figcaption><span class="n">1</span>今日可用額度<small>打開就知道今天還可以花多少</small></figcaption></figure>
+        <figure class="slide"><div class="frame top"><img src="img/s2.jpg" alt="快速記帳：輸入「排骨便當120現金」後自動填好分類、付款方式、金額" loading="lazy"></div><figcaption><span class="n">2</span>說一句話就記好<small>分類、金額、付款方式自動填好</small></figcaption></figure>
+        <figure class="slide"><div class="frame top"><img src="img/s3.jpg" alt="支出明細列表，代墊款另外標示" loading="lazy"></div><figcaption><span class="n">3</span>每一筆都清清楚楚<small>代墊款另外標示，記錯可以修改</small></figcaption></figure>
+        <figure class="slide"><div class="frame bottom"><img src="img/s4.jpg" alt="本月統計與支出分類" loading="lazy"></div><figcaption><span class="n">4</span>錢花到哪一目了然<small>支出分類由多到少排好</small></figcaption></figure>
+        <figure class="slide"><div class="frame"><img src="img/s5.jpg" alt="財務小提醒" loading="lazy"></div><figcaption><span class="n">5</span>財務小提醒<small>自動整理這個月的變化</small></figcaption></figure>
       </div>
       <div class="slider-ctrl"><button type="button" id="prev" aria-label="上一張">‹</button><span>左右滑動看 5 個步驟</span><button type="button" id="next" aria-label="下一張">›</button></div>
     </div>
